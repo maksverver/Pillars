@@ -1,0 +1,27 @@
+#ifndef ANALYSIS_H
+#define ANALYSIS_H
+
+#include "Board.h"
+
+#define MAX_GROUPS 50           /* max. number of groups on a board */
+
+typedef struct GroupInfo
+{
+    int num_groups;             /* number of groups identified */
+    Point first[MAX_GROUPS];    /* one point that's part of the group */
+    Rect  bounds[MAX_GROUPS];   /* minimal bounding rectangle of the group */
+    int   nval[MAX_GROUPS];     /* nim-value of group */
+} GroupInfo;
+
+/* Initialize the analysis module */
+void analysis_initialize();
+
+/* Identifies groups in the board. Input must be a truncated board.
+   Board is modified so that squares belonging to group 'g' are marked with
+   byte g+1. Does not fill in nim values. */
+void analysis_identify_groups(Board *brd, GroupInfo *gi);
+
+/* Assign nim-values to groups (if possible). */
+void analysis_nim_values(Board *brd, GroupInfo *gi);
+
+#endif /* ndef ANALYSIS_H */
