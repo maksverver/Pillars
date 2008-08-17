@@ -9,8 +9,10 @@ typedef struct GroupInfo
 {
     int num_groups;             /* number of groups identified */
     Point first[MAX_GROUPS];    /* one point that's part of the group */
+    int   size[MAX_GROUPS];     /* number of fields in the group */
     Rect  bounds[MAX_GROUPS];   /* minimal bounding rectangle of the group */
     int   nval[MAX_GROUPS];     /* nim-value of group */
+    int   nval2[MAX_GROUPS];    /* nim-value of group */
 } GroupInfo;
 
 /* Initialize the analysis module */

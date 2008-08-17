@@ -48,13 +48,13 @@ int main(int argc, char *argv[])
         if (gi.nval[n] < 0) nsum = -1;
         if (nsum != -1) nsum ^= gi.nval[n];
 
-        printf("%2d: nv=%2d (%2d,%2d)-(%2d,%2d) [%dx%d]  (%d,%d)\n",
-            n, gi.nval[n],
+        printf("%2d: nv=%2d/%2d (%2d,%2d)-(%2d,%2d) [%dx%d]  (%d,%d) %d fields\n",
+            n, gi.nval[n], gi.nval2[n],
             gi.bounds[n].p.r, gi.bounds[n].p.c,
             gi.bounds[n].q.r, gi.bounds[n].q.c,
             gi.bounds[n].q.r - gi.bounds[n].p.r,
             gi.bounds[n].q.c - gi.bounds[n].p.c,
-            gi.first[n].r, gi.first[n].c );
+            gi.first[n].r, gi.first[n].c, gi.size[n] );
     }
 
     {
