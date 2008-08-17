@@ -1,4 +1,4 @@
-CFLAGS=-O2 -g -ansi -Wall -Wextra -Werror
+CFLAGS=-O2 -g -ansi -Wall -Wextra #-Werror
 LDFLAGS=-g
 LDLIBS=-lm
 OBJS=test.o Board.o Analysis.o

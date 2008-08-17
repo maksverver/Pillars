@@ -113,9 +113,8 @@ static bool write_memo(const char *filename, signed char *memo, size_t size)
 
 static void init_memo(const char *filename, signed char *memo, int height, int width)
 {
-    Mask mask/*, ma, mb, mc, md */;
-    Rect m;
-    int /*r, c,*/ nval;
+    Mask mask, ma, mb, mc, md;
+    int r1, c1, r2, c2, nval;
     unsigned nvals;
 
     if (read_memo(filename, memo, (size_t)1 << height*width)) return;
@@ -125,55 +124,33 @@ static void init_memo(const char *filename, signed char *memo, int height, int w
     {
         /* Try all moves */
         nvals = 0;
-#if 0
+
         ma = 1;
-        for (r = 0; r < height; ++r)
+        for (r1 = 0; r1 < height; ++r1)
         {
             mb = ma;
-            for (c = 0; c < width; ++c)
+            for (c1 = 0; c1 < width; ++c1)
             {
-                mc = mb;
-                while ((mask&mc) == mc)
+                if (mask&mb)
                 {
-                    md = mc;
-                    while ((mask&md) == md)
+                    mc = mb;
+                    for (r2 = r1; r2 < height; ++r2)
                     {
-                        nvals |= (1<<memo[mask^md]);
-                        md |= (md << 1);
+                        md = mc;
+                        for (c2 = c1; c2 < width; ++c2)
+                        {
+                            nvals |= (1<<memo[mask^md]);
+                            md |= (md << 1);
+                            if ((mask&md) != md) break;
+                        }
+                        mc |= (mc << width);
+                        if ((mask&mc) != mc) break;
                     }
-                    mc |= (mc << width);
                 }
                 mb <<= 1;
             }
             ma <<= width;
         }
-#endif
-        for (m.p.r = 0; m.p.r < height; ++m.p.r)
-        {
-            for (m.p.c = 0; m.p.c < width; ++m.p.c)
-            {
-                for (m.q.r = m.p.r + 1; m.q.r <= height; ++m.q.r)
-                {
-                    for (m.q.c = m.p.c + 1; m.q.c <= width; ++m.q.c)
-                    {
-                        int r,c;
-                        Mask mm = 0;
-                        for (r = m.p.r; r < m.q.r; ++r)
-                        {
-                            for (c = m.p.c; c < m.q.c; ++c)
-                            {
-                                mm |= (1<<(width*r + c));
-                            }
-                        }
-                        if ((mask&mm) == mm)
-                        {
-                            nvals |= (1<<memo[mask^mm]);
-                        }
-                    }
-                }
-            }
-        }
-    
 
         /* Find minimum excluded ordinal */
         nval = 0;
