@@ -214,16 +214,19 @@ static int nvalue(Board *brd, GroupInfo *gi, int g)
                         : make_mask(brd, g, &rect) ];
 }
 
+/* Maximum number of fields in a group to allow in-depth analysis. */
+#define ANALYSIS_MAX_FIELDS 27
+
 /* Determine the nim value for the given group. */
 static int nvalue_new(Board *brd, GroupInfo *gi, int g)
 {
-    signed char *memo;
+    static signed char memo[1 << ANALYSIS_MAX_FIELDS];
     Mask mask, *move, moves[2501];
     int r, c, num_moves, result;
     uint32_t nvals;
     Rect rect;
 
-    if (gi->size[g] > 27) return -1;
+    if (gi->size[g] > ANALYSIS_MAX_FIELDS) return -1;
     assert(gi->size[g] > 0);
 
     /* Figure out all valid moves */
@@ -264,11 +267,7 @@ static int nvalue_new(Board *brd, GroupInfo *gi, int g)
     }
     moves[num_moves] = 0;   /* mark end of moves */
 
-    /* Allocate memo memory */
-    memo = malloc(sizeof(*memo) << gi->size[g]);
-    assert(memo != NULL);
-    memset(memo, -1, sizeof(*memo) << gi->size[g]);
-
+    /* memset(memo, -1, sizeof(*memo) << gi->size[g]); */
     for (mask = ((Mask)1 << gi->size[g]); mask-- > 0; )
     {
         nvals = 0;
@@ -284,7 +283,6 @@ static int nvalue_new(Board *brd, GroupInfo *gi, int g)
         memo[mask] = result;
     }
     assert(result == memo[0]);
-    free(memo);
     return result;
 }
 
