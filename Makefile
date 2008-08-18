@@ -1,4 +1,4 @@
-CFLAGS=-g -ansi -Wall -Wextra -O2 -m32 -march=pentium4
+CFLAGS=-g -ansi -Wall -Wextra -O2 -m32
 LDFLAGS=-g -m32
 LDLIBS=-lm
 OBJS=test.o Board.o Analysis.o nvalue_new_work.o

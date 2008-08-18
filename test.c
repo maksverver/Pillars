@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+extern signed char memo[];  /* for debugging */
+
 int main(int argc, char *argv[])
 {
     Board b;
@@ -55,6 +57,18 @@ int main(int argc, char *argv[])
             gi.bounds[n].q.r - gi.bounds[n].p.r,
             gi.bounds[n].q.c - gi.bounds[n].p.c,
             gi.first[n].r, gi.first[n].c, gi.size[n] );
+
+        {
+            FILE *fp;
+            int n;
+            fp = fopen("test.dat","wb");
+            for (n = (1<<gi.size[n])-1; n >= 0; --n)
+            {
+                fputc(memo[n], fp);
+            }
+            assert(fp != NULL);
+            fclose(fp);
+        }
     }
 
     {

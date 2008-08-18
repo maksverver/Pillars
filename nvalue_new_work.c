@@ -5,14 +5,14 @@ extern char memo[];
 extern Mask moves[];
 extern int skip[];
 
+int nvalue_new_work(int grp_size);
+
 /* Does the real work for nvalue_new */
 int nvalue_new_work(int grp_size)
 {
-    int result, n;
+    int n, nval;
     Mask mask, move;
     uint32_t nvals;
-
-    result = -1;
 
     mask = ((Mask)1<<grp_size);
     do {
@@ -31,10 +31,11 @@ int nvalue_new_work(int grp_size)
                 n += 1;
             }
         }
-        result = 0;
-        while ((nvals & (1 << result)) != 0) ++result;
-        memo[mask] = result;
-    } while(mask > 0);
 
-    return result;
+        nval = 0;
+        while ((nvals & (1 << nval)) != 0) ++nval;
+        memo[mask] = nval;
+    } while (mask > 0);
+
+    return memo[0];
 }
