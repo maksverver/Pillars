@@ -1,11 +1,4 @@
-#include <stdint.h>
-
-typedef uint32_t Mask;
-extern char memo[];
-extern Mask moves[];
-extern int skip[];
-
-int nvalue_new_work(int grp_size);
+#include "Analysis.h"
 
 /* Does the real work for nvalue_new */
 int nvalue_new_work(int grp_size)

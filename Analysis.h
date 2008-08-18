@@ -2,8 +2,21 @@
 #define ANALYSIS_H
 
 #include "Board.h"
+#include <stdint.h>
 
-#define MAX_GROUPS 50           /* max. number of groups on a board */
+#define MAX_GROUPS            50    /* max. number of groups on a board */
+#define MAX_MOVES           3025    /* max. number of moves possible */
+
+#define ANALYSIS_MAX_SIZE    27    /* max. size of group for in-depth analysis */
+
+typedef signed char NV;             /* a nim-value */
+typedef uint32_t Mask;              /* bitmask for analysis */
+typedef uint32_t NVSet;             /* set of nim-values */
+
+/* Global variables used internally */
+NV memo[1<<ANALYSIS_MAX_SIZE];
+Mask moves[MAX_MOVES+1];
+int skip[MAX_MOVES];
 
 typedef struct GroupInfo
 {
@@ -11,7 +24,7 @@ typedef struct GroupInfo
     Point first[MAX_GROUPS];    /* one point that's part of the group */
     int   size[MAX_GROUPS];     /* number of fields in the group */
     Rect  bounds[MAX_GROUPS];   /* minimal bounding rectangle of the group */
-    int   nval[MAX_GROUPS];     /* nim-value of group */
+    NV    nval[MAX_GROUPS];     /* nim-value of group */
 } GroupInfo;
 
 /* Initialize the analysis module */

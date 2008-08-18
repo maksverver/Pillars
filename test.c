@@ -3,8 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern signed char memo[];  /* for debugging */
-
 int main(int argc, char *argv[])
 {
     Board b;

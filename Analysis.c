@@ -4,20 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* Maximum number of fields in a group to allow in-depth analysis. */
-#define ANALYSIS_MAX_FIELDS 27
-
-/* Maximum number of moves possible in a field.
-   sum([ (10-x)*(10-y) for x in range(10) for y in range(10) ]) */
-#define MAX_MOVES 3025
-
-typedef uint32_t Mask;
-
+/* worker function -- defined elsewhere */
 int nvalue_new_work(int grp_size);
-
-char memo[1 << ANALYSIS_MAX_FIELDS];
-Mask moves[MAX_MOVES+1];
-int skip[MAX_MOVES];
 
 /* Determine the nim value for the given group. */
 static int nvalue_new(Board *brd, GroupInfo *gi, int g)
@@ -26,7 +14,7 @@ static int nvalue_new(Board *brd, GroupInfo *gi, int g)
     int num_moves;
     Rect rect;
 
-    if (gi->size[g] > ANALYSIS_MAX_FIELDS) return -1;
+    if (gi->size[g] > ANALYSIS_MAX_SIZE) return -1;
     assert(gi->size[g] > 0);
 
     /* Figure out all valid moves */
