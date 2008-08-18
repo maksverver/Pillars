@@ -3,13 +3,24 @@
 #include <string.h>
 #include <stdio.h>
 
-static const char hexdigits[] = "0123456789ABCDEF";
+static const char hexdigits[]    = "0123456789ABCDEF";
+static const char base32digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUV";
 
 static bool is_hex_string(const char *str)
 {
     while (*str)
     {
         if (strchr(hexdigits, *str) == NULL) return false;
+        str += 1;
+    }
+    return true;
+}
+
+static bool is_base32_string(const char *str)
+{
+    while (*str)
+    {
+        if (strchr(base32digits, *str) == NULL) return false;
         str += 1;
     }
     return true;
@@ -38,13 +49,13 @@ bool board_decode_full(Board *brd, const char *str)
 bool board_decode_short(Board *brd, const char *str)
 {
     int i, n, r, c;
-    if (strlen(str) != 25 || !is_hex_string(str)) return false;
+    if (strlen(str) != 20 || !is_base32_string(str)) return false;
 
     r = c = 0;
     while (*str)
     {
-        i = strchr(hexdigits, *str++) - hexdigits;
-        for (n = 3; n >= 0; --n)
+        i = strchr(base32digits, *str++) - base32digits;
+        for (n = 4; n >= 0; --n)
         {
             (*brd)[r][c++] = ((i>>n)&1) ? -1 : 0;
             if (c == 10) c = 0, r++;
@@ -80,9 +91,9 @@ void board_encode_short(Board *brd, char buf[26])
         for (c = 0; c < 10; ++c)
         {
             num = (num<<1) | ((*brd)[r][c] ? 1 : 0);
-            if (++bits == 4)
+            if (++bits == 5)
             {
-                *buf++ = hexdigits[num];
+                *buf++ = base32digits[num];
                 num = bits = 0;
             }
         }

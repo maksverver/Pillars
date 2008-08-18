@@ -1,7 +1,7 @@
-CFLAGS=-O2 -g -ansi -Wall -Wextra #-Werror
-LDFLAGS=-g
+CFLAGS=-g -ansi -Wall -Wextra -O2 -m32 -march=pentium4
+LDFLAGS=-g -m32
 LDLIBS=-lm
-OBJS=test.o Board.o Analysis.o
+OBJS=test.o Board.o Analysis.o nvalue_new_work.o
 
 all: test
 

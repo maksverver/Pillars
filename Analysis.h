@@ -12,7 +12,6 @@ typedef struct GroupInfo
     int   size[MAX_GROUPS];     /* number of fields in the group */
     Rect  bounds[MAX_GROUPS];   /* minimal bounding rectangle of the group */
     int   nval[MAX_GROUPS];     /* nim-value of group */
-    int   nval2[MAX_GROUPS];    /* nim-value of group */
 } GroupInfo;
 
 /* Initialize the analysis module */
