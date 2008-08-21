@@ -7,7 +7,11 @@
 #define MAX_GROUPS            50    /* max. number of groups on a board */
 #define MAX_MOVES           3025    /* max. number of moves possible */
 
+#ifndef LOCAL   /* competition settings */
+#define ANALYSIS_MAX_SIZE    20    /* max. size of group for in-depth analysis */
+#else           /* local settings */
 #define ANALYSIS_MAX_SIZE    27    /* max. size of group for in-depth analysis */
+#endif
 
 typedef signed char NV;             /* a nim-value */
 typedef uint32_t Mask;              /* bitmask for analysis */

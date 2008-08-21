@@ -1,4 +1,4 @@
-CFLAGS=-g -ansi -Wall -Wextra -O2 -m32
+CFLAGS=-g -ansi -Wall -Wextra -O2 -m32 -DLOCAL
 LDFLAGS=-g -m32
 LDLIBS=-lm
 OBJS=Board.o Analysis.o nvalue_new_work.o
