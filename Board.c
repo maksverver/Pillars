@@ -168,7 +168,7 @@ int board_empty_area(Board *brd)
     {
         for (c = 0; c < 10; ++c)
         {
-            res += (brd)[r][c] == 0;
+            res += (*brd)[r][c] == 0;
         }
     }
     return res;
@@ -224,12 +224,12 @@ bool point_decode(Point *p, const char *buf)
     return true;
 }
 
-void point_encode(Point *p, char buf[3])
+void point_encode(const Point *p, char buf[3])
 {
     assert(p->r >= 0 && p->r < 10);
     assert(p->c >= 0 && p->c < 10);
     buf[0] = 'A' + p->r;
-    buf[1] = 'a' + p->r;
+    buf[1] = 'a' + p->c;
     buf[2] = '\0';
 }
 
@@ -246,8 +246,15 @@ bool rect_decode(Rect *r, const char *buf)
     return r;
 }
 
-void rect_encode(Rect *r, char buf[5])
+void rect_encode(const Rect *r, char buf[5])
 {
-    point_encode(&r->p, buf);
-    point_encode(&r->q, buf + 2);
+    assert(r->p.r >= 0 && r->p.r < 10);
+    assert(r->p.c >= 0 && r->p.c < 10);
+    assert(r->q.r > r->p.r && r->q.r <= 10);
+    assert(r->q.c > r->p.c && r->q.c <= 10);
+    buf[0] = 'A' + r->p.r;
+    buf[1] = 'a' + r->p.c;
+    buf[2] = 'A' + r->q.r - 1;
+    buf[3] = 'a' + r->q.c - 1;
+    buf[4] = '\0';
 }

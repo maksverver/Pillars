@@ -28,9 +28,9 @@ void board_construct(Board *board, int number);
 void board_print(Board *board, FILE *fp);
 
 bool point_decode(Point *p, const char *buf);
-void point_encode(Point *p, char buf[3]);
+void point_encode(const Point *p, char buf[3]);
 
 bool rect_decode(Rect *r, const char *buf);
-void rect_encode(Rect *r, char buf[5]);
+void rect_encode(const Rect *r, char buf[5]);
 
 #endif /* ndef BOARD_H_INCLUDED */
