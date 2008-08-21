@@ -158,3 +158,96 @@ void board_fill(Board *brd, Rect *rect, int val)
         }
     }
 }
+
+int board_empty_area(Board *brd)
+{
+    int r, c, res;
+
+    res = 0;
+    for (r = 0; r < 10; ++r)
+    {
+        for (c = 0; c < 10; ++c)
+        {
+            res += (brd)[r][c] == 0;
+        }
+    }
+    return res;
+}
+
+static void permute10(int *arr, int number)
+{
+    static int fac[10] = { 1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880 };
+    int pos, i, k, tmp;
+
+    for (pos = 0; pos < 9; ++pos)
+    {
+        assert(number < fac[10 - pos]);
+
+        k = pos + number/fac[10 - pos - 1];
+        tmp = arr[k];
+        for (i = k; i > pos; --i) arr[i] = arr[i - 1];
+        arr[pos] = tmp;
+
+        number %= fac[10 - pos - 1];
+    }
+}
+
+void board_construct(Board *brd, int number)
+{
+    int nums[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    int r, c;
+
+    assert(number >= 0 && number < NUM_BOARDS);
+    permute10(nums, number);
+    for (r = 0; r < 10; ++r)
+    {
+        for (c = 0; c < 10; ++c)
+        {
+            (*brd)[r][c] = 0;
+        }
+        (*brd)[r][nums[r]] = -1;
+    }
+}
+
+bool point_decode(Point *p, const char *buf)
+{
+    int r, c;
+
+    if (buf[0] == '\0' || buf[1] == '\0') return false;
+
+    r = buf[0] - 'A';
+    c = buf[1] - 'a';
+    if (r < 0 || r >= 10 || c < 0 || c >= 10) return false;
+
+    p->r = r;
+    p->c = c;
+    return true;
+}
+
+void point_encode(Point *p, char buf[3])
+{
+    assert(p->r >= 0 && p->r < 10);
+    assert(p->c >= 0 && p->c < 10);
+    buf[0] = 'A' + p->r;
+    buf[1] = 'a' + p->r;
+    buf[2] = '\0';
+}
+
+bool rect_decode(Rect *r, const char *buf)
+{
+    Point p, q;
+
+    if (!point_decode(&p, buf) || !point_decode(&q, buf + 2)) return false;
+    if (q.r < p.r || q.c < p.c) return false;
+    r->p = p;
+    r->q = q;
+    r->q.r += 1;
+    r->q.c += 1;
+    return r;
+}
+
+void rect_encode(Rect *r, char buf[5])
+{
+    point_encode(&r->p, buf);
+    point_encode(&r->q, buf + 2);
+}

@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#define NUM_BOARDS 3628800      /* == factorial of 10 */
+
 typedef signed char Field;
 typedef Field Board[10][10];
 
@@ -21,6 +23,14 @@ void board_encode_short(Board *board, char buf[26]);
 void board_truncate(Board *board);
 bool board_is_valid_move(Board *board, Rect *rect);
 void board_fill(Board *board, Rect *rect, int val);
+int board_empty_area(Board *board);
+void board_construct(Board *board, int number);
 void board_print(Board *board, FILE *fp);
+
+bool point_decode(Point *p, const char *buf);
+void point_encode(Point *p, char buf[3]);
+
+bool rect_decode(Rect *r, const char *buf);
+void rect_encode(Rect *r, char buf[5]);
 
 #endif /* ndef BOARD_H_INCLUDED */

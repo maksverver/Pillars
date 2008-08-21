@@ -58,9 +58,9 @@ int main(int argc, char *argv[])
 
         {
             FILE *fp;
-            int n;
+            int m;
             fp = fopen("test.dat","wb");
-            for (n = (1<<gi.size[n])-1; n >= 0; --n)
+            for (m = (1<<gi.size[n])-1; m >= 0; --m)
             {
                 fputc(memo[n], fp);
             }
