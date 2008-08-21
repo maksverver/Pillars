@@ -1,4 +1,5 @@
 #include "Board.h"
+#include "HashTable.h"
 #include <assert.h>
 
 
