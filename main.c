@@ -1,7 +1,5 @@
 #include "Board.h"
-#include "HashTable.h"
 #include <assert.h>
-
 
 /* Brain-dead test player */
 void select_move(Board *brd, Rect *move)

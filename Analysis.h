@@ -13,6 +13,9 @@
 #define ANALYSIS_MAX_SIZE    27    /* max. size of group for in-depth analysis */
 #endif
 
+/* Minimum size of shapes to cache */
+#define ANALYSIS_MIN_CACHE_SIZE 16
+
 typedef signed char NV;             /* a nim-value */
 typedef uint32_t Mask;              /* bitmask for analysis */
 typedef uint32_t NVSet;             /* set of nim-values */

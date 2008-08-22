@@ -3,6 +3,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* Given a GroupInfo (complete with nim-values) determines if the current
+   position is known to be losing. If any nim-values are not known, false is
+   returned. */
+static bool is_losing(GroupInfo *gi)
+{
+    int n, num_ones, nsum;
+
+    num_ones = 0;
+    nsum = 0;
+    for (n = 0; n < gi->num_groups; ++n)
+    {
+        if (gi->size[n] == 1) ++num_ones;
+        if (gi->nval[n] < 0) return false;   /* value unknown! */
+        nsum ^= gi->nval[n];
+    }
+
+    return gi->num_groups == num_ones ? nsum != 0 : nsum == 0;
+}
+
 int main(int argc, char *argv[])
 {
     Board b;
@@ -69,40 +88,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    {
-        Rect m;
-        int i, n;
-        for (m.p.r = 0; m.p.r < 10; ++m.p.r)
-        {
-            for (m.p.c = 0; m.p.c < 10; ++m.p.c)
-            {
-                for (m.q.r = m.p.r + 1; m.q.r <= 10; ++m.q.r)
-                {
-                    for (m.q.c = m.p.c + 1; m.q.c <= 10; ++m.q.c)
-                    {
-                        if (board_is_valid_move(&b, &m))
-                        {
-                            GroupInfo gi2;
-                            board_fill(&b, &m, -1);
-                            analysis_identify_groups(&b, &gi2);
-                            analysis_nim_values(&b, &gi2);
-                            i = 0;
-                            for (n = 0; n < gi.num_groups; ++n)
-                            {
-                                i ^= gi.nval[n];
-                            }
-                            if (i == 0) {
-                                board_print(&b, stdout);
-                                printf("\n");
-                            }
-                            board_fill(&b, &m, 1);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     if (nsum < 0)
     {
         printf("Game status unknown!\n");
@@ -126,6 +111,41 @@ int main(int argc, char *argv[])
     else
     {
         printf("Nim sum %d; player wins.\n", nsum);
+    }
+
+    /* Search for winning moves */
+    {
+        Rect m;
+        board_clear(&b);
+        for (m.p.r = 0; m.p.r < 10; ++m.p.r)
+        {
+            for (m.p.c = 0; m.p.c < 10; ++m.p.c)
+            {
+                for (m.q.r = m.p.r + 1; m.q.r <= 10; ++m.q.r)
+                {
+                    for (m.q.c = m.p.c + 1; m.q.c <= 10; ++m.q.c)
+                    {
+                        if (board_is_valid_move(&b, &m))
+                        {
+                            GroupInfo gi2;
+                            board_fill(&b, &m, -1);
+                            analysis_identify_groups(&b, &gi2);
+                            analysis_nim_values(&b, &gi2);
+                            board_clear(&b);
+                            if (is_losing(&gi2))
+                            {
+                                char buf[64];
+                                rect_encode(&m, buf);
+                                board_encode_short(&b, buf + 5);
+                                printf("Move to make nsum 0: %s (%s)\n",
+                                       buf, buf + 5);
+                            }
+                            board_fill(&b, &m, 0);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     return 0;

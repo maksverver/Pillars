@@ -108,12 +108,14 @@ void board_print(Board *brd, FILE *fp)
     static const char chrs[] =
         "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
+    fputs("  abcdefghij\n", fp);
     for (r = 0; r < 10; ++r)
     {
+        fputc('A' + r, fp);
+        fputc(' ', fp);
         for (c = 0; c < 10; ++c)
         {
             i = (*brd)[r][c];
-            fputc(' ', fp);
             fputc( i ==  0 ? '.' : i == -1 ? '#' : i < 0 ? '?' :
                    chrs[i%strlen(chrs)], fp );
         }
@@ -128,6 +130,15 @@ void board_truncate(Board *brd)
 
     flds = &((*brd)[0][0]);
     for (n = 0; n < 100; ++n) flds[n] = flds[n] == 0 ? 0 : -1;
+}
+
+void board_clear(Board *brd)
+{
+    int n;
+    Field *flds;
+
+    flds = &((*brd)[0][0]);
+    for (n = 0; n < 100; ++n) flds[n] = flds[n] >= 0 ? 0 : -1;
 }
 
 bool board_is_valid_move(Board *brd, Rect *rect)

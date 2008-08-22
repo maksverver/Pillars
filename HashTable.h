@@ -36,6 +36,10 @@ bool HT_get_entry(HashTable const *ht,
                   void **old_key,
                   void **old_value);
 
+/* Retrieve a value by key, if it does not exist, or insert it otherwise.
+   Returns the existing value, or NULL if none is found. */
+void *HT_get_or_set(HashTable *ht, void const *key, void const *value);
+
 /* Remove an entry with the given key.
    Returns whether the entry was found; if so, *old_key and *old_value
    are set to the old key and value pointers. */

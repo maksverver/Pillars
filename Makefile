@@ -1,9 +1,9 @@
 CFLAGS=-g -ansi -Wall -Wextra -O2 -m32 -DLOCAL
 LDFLAGS=-g -m32
 LDLIBS=-lm
-OBJS=Board.o Analysis.o nvalue_new_work.o
+OBJS=Analysis.o Board.o HashTable.o nvalue_new_work.o
 ANALYZE_OBJS=analyze.o $(OBJS)
-ARBITER_OBJS=arbiter.o Board.o
+ARBITER_OBJS=arbiter.o Board.o 
 PLAYER_SRCS=Analysis.c Board.c HashTable.c nvalue_new_work.c main.c
 
 all: analyze arbiter player

@@ -106,6 +106,21 @@ bool HT_get_entry(HashTable const *ht,
     return true;
 }
 
+
+/* Retrieve a value by key, if it does not exist, or insert it otherwise.
+   Returns the existing value, or NULL if none is found. */
+void *HT_get_or_set(HashTable *ht, void const *key, const void *value)
+{
+    Entry **e = find(ht, key);
+    if (*e != NULL) return (*e)->value;
+    *e = malloc(sizeof(Entry));
+    assert(*e != NULL);
+    (*e)->key   = (void*)key;
+    (*e)->value = (void*)value;
+    ht->size += 1;
+    return NULL;
+}
+
 bool HT_remove(HashTable *ht,
                void const *key,
                void **old_key,

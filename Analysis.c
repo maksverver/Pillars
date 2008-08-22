@@ -1,8 +1,18 @@
 #include "Analysis.h"
+#include "HashTable.h"
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+
+/* nvalue cache -- to avoid recomputing nvalues for large areas */
+HashTable *nvcache;
+
+typedef struct NVCacheEntry
+{
+    uint8_t board[13];
+    signed char nvalue;
+} NVCacheEntry;
 
 /* worker function -- defined elsewhere */
 int nvalue_new_work(int grp_size);
@@ -11,11 +21,42 @@ int nvalue_new_work(int grp_size);
 static int nvalue_new(Board *brd, GroupInfo *gi, int g)
 {
     Mask mask, *move;
-    int num_moves;
+    int num_moves, result;
     Rect rect;
+    NVCacheEntry *nvce;
 
     if (gi->size[g] > ANALYSIS_MAX_SIZE) return -1;
     assert(gi->size[g] > 0);
+
+    if (gi->size[g] < ANALYSIS_MIN_CACHE_SIZE)
+    {
+        nvce = NULL;
+    }
+    else
+    {
+        int r, c;
+        NVCacheEntry *old;
+
+        nvce = malloc(sizeof(NVCacheEntry));
+        assert(nvce != NULL);
+        memset(nvce->board, 0, sizeof(nvce->board));
+        for (r = 0; r < 10; ++r)
+        {
+            for (c = 0; c < 10; ++c)
+            {
+                if ((*brd)[r][c] == g + 1)
+                {
+                    nvce->board[(10*r + c)/8] |= 1<<((10*r + c)%8);
+                }
+            }
+        }
+        old = HT_get_or_set(nvcache, nvce->board, nvce);
+        if (old != NULL)
+        {
+            free(nvce);
+            return old->nvalue;
+        }
+    }
 
     /* Figure out all valid moves */
     num_moves = 0;
@@ -66,7 +107,11 @@ static int nvalue_new(Board *brd, GroupInfo *gi, int g)
     }
 
     /* Calculate nim value (this takes the most time) */
-    return nvalue_new_work(gi->size[g]);
+    result = nvalue_new_work(gi->size[g]);
+
+    if (nvce != NULL) nvce->nvalue = result;
+
+    return result;
 }
 
 /* Flood fill the board from a specific position,
@@ -89,7 +134,11 @@ static int fill(Board *brd, GroupInfo *gi, int r, int c)
 
 void analysis_initialize()
 {
-    /* Nothing needed */
+    NVCacheEntry dummy;
+    (void)dummy;
+    assert(sizeof(dummy.board) == 13);
+    nvcache = HT_create(sizeof(dummy.board), 1000007);
+    assert(nvcache != NULL);
 }
 
 void analysis_identify_groups(Board *brd, GroupInfo *gi)
