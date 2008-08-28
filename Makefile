@@ -4,15 +4,19 @@ LDLIBS=-lm
 OBJS=Analysis.o Board.o HashTable.o nvalue_new_work.o
 ANALYZE_OBJS=analyze.o $(OBJS)
 ARBITER_OBJS=arbiter.o Board.o 
+BENCHMARK_OBJS=benchmark.o $(OBJS)
 PLAYER_SRCS=Analysis.c Board.c HashTable.c nvalue_new_work.c main.c
 
-all: analyze arbiter player
+all: analyze arbiter benchmark player
 
 analyze: $(ANALYZE_OBJS)
 	$(CC) $(LDFLAGS) -o analyze $(ANALYZE_OBJS) $(LDLIBS)
 
 arbiter: $(ARBITER_OBJS)
 	$(CC) $(LDFLAGS) -o arbiter $(ARBITER_OBJS) $(LDLIBS)
+
+benchmark: $(BENCHMARK_OBJS)
+	$(CC) $(LDFLAGS) -o benchmark $(BENCHMARK_OBJS) $(LDLIBS)
 
 player.c: $(PLAYER_SRCS) Analysis.h Board.h
 	./compile.pl $(PLAYER_SRCS) > player.c
