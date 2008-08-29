@@ -4,6 +4,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#define TIME_LIMIT 5
+
 /* For seeding the RNG: */
 #include <time.h>
 #include <sys/types.h>
@@ -156,8 +158,9 @@ int main()
         board_fill(&board, &move, ++turn);
         /* TODO: use joker when winning */
         rect_encode(&move, buf);
-        info("Sending: %s", buf);
         total_time += time_now();
+        info("Time left: %.3fs\n", TIME_LIMIT - total_time);
+        info("Sending: %s", buf);
 
         fprintf(stdout, "%s\n", buf);
         fflush(stdout);
