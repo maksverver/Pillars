@@ -60,7 +60,7 @@ static void shuffle_moves_and_values(Rect *moves, int *values, int num_moves)
     }
 }
 
-void select_move(Board *brd, Rect *move)
+void select_move(Board *brd, Rect *move, bool *use_joker)
 {
     Rect moves[MAX_MOVES];
     int values[MAX_MOVES];
@@ -87,6 +87,8 @@ void select_move(Board *brd, Rect *move)
     info("-2/-1/+1/+2: %d/%d/%d/%d (best value: %d)",
          cnt[0], cnt[1], cnt[3], cnt[4], best_val);
 
+    *use_joker = (best_val == +2);
+
     shuffle_moves_and_values(moves, values, num_moves);
     for (n = 0; n < num_moves; ++n)
     {
@@ -106,6 +108,7 @@ int main()
     int r, c, n;
     int turn;
     double total_time;
+    bool joker, use_joker;
 
     time_reset();
     analysis_initialize();
@@ -135,6 +138,7 @@ int main()
     total_time = time_now();
 
     turn = 0;
+    joker = true;
     while((line = next_line()) != NULL)
     {
         Rect move;
@@ -154,14 +158,21 @@ int main()
             break;
         }
     start:
-        select_move(&board, &move);
+        select_move(&board, &move, &use_joker);
+        if (joker && use_joker)
+        {
+            joker = false;
+            buf[0] = '!';
+            rect_encode(&move, buf + 1);
+        }
+        else
+        {
+            rect_encode(&move, buf);
+        }
         board_fill(&board, &move, ++turn);
-        /* TODO: use joker when winning */
-        rect_encode(&move, buf);
         total_time += time_now();
         info("Time left: %.3fs\n", TIME_LIMIT - total_time);
         info("Sending: %s", buf);
-
         fprintf(stdout, "%s\n", buf);
         fflush(stdout);
     }
