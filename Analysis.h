@@ -13,7 +13,7 @@
 #endif
 
 /* Minimum size of shapes to cache */
-#define ANALYSIS_MIN_CACHE_SIZE 16
+#define ANALYSIS_MIN_CACHE_SIZE 12
 
 typedef signed char NV;             /* a nim-value */
 typedef uint32_t Mask;              /* bitmask for analysis */
