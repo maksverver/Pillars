@@ -269,3 +269,30 @@ void rect_encode(const Rect *r, char buf[5])
     buf[3] = 'a' + r->q.c - 1;
     buf[4] = '\0';
 }
+
+int board_list_moves(Board *brd, Rect *moves)
+{
+    /* NOTE: this can be optimized some more, if necessary */
+
+    Rect r;
+    int cnt;
+
+    cnt = 0;
+    for (r.p.r = 0; r.p.r < 10; ++r.p.r)
+    {
+        for (r.p.c = 0; r.p.c < 10; ++r.p.c)
+        {
+            if ((*brd)[r.p.r][r.p.c] != 0) continue;
+            for (r.q.r = r.p.r + 1; r.q.r <= 10; ++r.q.r)
+            {
+                for (r.q.c = r.p.c + 1; r.q.c <= 10; ++r.q.c)
+                {
+                    if (!board_is_valid_move(brd, &r)) break;
+                    if (moves) *moves++ = r;
+                    ++cnt;
+                }
+            }
+        }
+    }
+    return cnt;
+}

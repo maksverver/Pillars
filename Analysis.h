@@ -5,12 +5,11 @@
 #include <stdint.h>
 
 #define MAX_GROUPS            50    /* max. number of groups on a board */
-#define MAX_MOVES           3025    /* max. number of moves possible */
 
 #ifndef LOCAL   /* competition settings */
-#define ANALYSIS_MAX_SIZE    20    /* max. size of group for in-depth analysis */
+#define ANALYSIS_MAX_SIZE    18    /* max. size of group for in-depth analysis */
 #else           /* local settings */
-#define ANALYSIS_MAX_SIZE    27    /* max. size of group for in-depth analysis */
+#define ANALYSIS_MAX_SIZE    20    /* max. size of group for in-depth analysis */
 #endif
 
 /* Minimum size of shapes to cache */
@@ -44,5 +43,18 @@ void analysis_identify_groups(Board *brd, GroupInfo *gi);
 
 /* Assign nim-values to groups (if possible). */
 void analysis_nim_values(Board *brd, GroupInfo *gi);
+
+/* Analyzes the board and the possible moves, and values each move,
+   with an integer:
+    +2  known to be winning
+    +1  guessed to be winning
+    -1  guessed to be losing
+    -2  known to be losing
+
+   Moves are written to the moves array, values are written to the values
+   array, and the number of moves available is returned. (The board provided
+   is not modified.)
+*/
+int analysis_value_moves(Board *brd, Rect *moves, int *values);
 
 #endif /* ndef ANALYSIS_H */

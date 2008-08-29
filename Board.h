@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #define NUM_BOARDS 3628800      /* == factorial of 10 */
+#define MAX_MOVES     1090
 
 typedef signed char Field;
 typedef Field Board[10][10];
@@ -27,11 +28,14 @@ void board_fill(Board *board, Rect *rect, int val);
 int board_empty_area(Board *board);
 void board_construct(Board *board, int number);
 void board_print(Board *board, FILE *fp);
+int board_list_moves(Board *board, Rect *moves);
 
 bool point_decode(Point *p, const char *buf);
 void point_encode(const Point *p, char buf[3]);
 
 bool rect_decode(Rect *r, const char *buf);
 void rect_encode(const Rect *r, char buf[5]);
+
+
 
 #endif /* ndef BOARD_H_INCLUDED */
