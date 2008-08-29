@@ -10,6 +10,7 @@ int nvalue_new_work(int grp_size)
     mask = ((Mask)1<<grp_size);
     do {
         --mask;
+
         nvals = 0;
         n = 0;
         while ((move = moves[n]) != 0)

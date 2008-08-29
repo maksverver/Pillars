@@ -1,5 +1,25 @@
+#include "Debug.h"
 #include "Board.h"
-#include <assert.h>
+#include "Analysis.h"
+#include <string.h>
+#include <stdlib.h>
+
+static const char *next_line()
+{
+    static char buf[1024];
+    size_t len;
+
+    if (!fgets(buf, sizeof(buf), stdin)) return NULL;
+
+    len = strlen(buf);
+    if (len > 0 && buf[len - 1] == '\n')
+    {
+        buf[len - 1] = '\0';
+        --len;
+    }
+
+    return buf;
+}
 
 /* Brain-dead test player */
 void select_move(Board *brd, Rect *move)
@@ -34,16 +54,18 @@ void select_move(Board *brd, Rect *move)
         }
     }
 
-    fprintf(stderr, "No valid moves available!\n");
-    abort();
+    fatal("No valid moves available");
 }
 
 int main()
 {
     Board board;
-    char buf[64];
+    const char *line;
     int r, c, n;
     int turn;
+
+    time_reset();
+    analysis_initialize();
 
     for (r = 0; r < 10; ++r)
     {
@@ -56,44 +78,42 @@ int main()
     for (n = 0; n < 10; ++n)
     {
         Point p;
-        fgets(buf, sizeof(buf), stdin);
-        if (point_decode(&p, buf))
+
+        line = next_line();
+        if (!point_decode(&p, line))
         {
-            board[p.r][p.c] = -1;
+            fatal("Invalid point received: %s", line);
         }
-        else
-        {
-            fprintf(stderr, "Invalid point received: %s\n", buf);
-            abort();
-        }
+        board[p.r][p.c] = -1;
     }
 
     turn = 0;
-    while(fgets(buf, sizeof(buf), stdin) != NULL)
+    while((line = next_line()) != NULL)
     {
         Rect move;
+        char buf[64];
 
-        if (strcmp(buf, "Start\n") == 0) goto start;
-        if (!rect_decode(&move, buf) || !board_is_valid_move(&board, &move))
+        info("Received: %s", line);
+        if (strcmp(line, "Start") == 0) goto start;
+        if (!rect_decode(&move, line) || !board_is_valid_move(&board, &move))
         {
-            fprintf(stderr, "Invalid move received: %s\n", buf);
-            abort();
+            fatal("Invalid move received: %s", buf);
         }
         board_fill(&board, &move, ++turn);
         if (board_empty_area(&board) == 0)
         {
-            fprintf(stderr, "Board is full.\n");
+            info("Board is full");
             break;
         }
     start:
         select_move(&board, &move);
         board_fill(&board, &move, ++turn);
         rect_encode(&move, buf);
+        info("Sending: %s", buf);
         fprintf(stdout, "%s\n", buf);
         fflush(stdout);
     }
-
-    fprintf(stderr, "Exiting.\n");
+    info("Exiting");
 
     return 0;
 }

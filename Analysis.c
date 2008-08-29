@@ -17,6 +17,11 @@ typedef struct NVCacheEntry
 /* worker function -- defined elsewhere */
 int nvalue_new_work(int grp_size);
 
+int mask_cmp(const void *ma, const void *mb)
+{
+    return *(Mask*)ma - *(Mask*)mb;
+}
+
 /* Determine the nim value for the given group. */
 static int nvalue_new(Board *brd, GroupInfo *gi, int g)
 {
@@ -99,9 +104,12 @@ static int nvalue_new(Board *brd, GroupInfo *gi, int g)
     }
     moves[num_moves] = 0;   /* mark end of moves */
 
+    /* qsort(moves, num_moves, sizeof(Mask), mask_cmp); */
+
     /* Calculate move skip data */
     for (move = moves; *move != 0; ++move)
     {
+        printf("-> %d\n", *move);
         skip[move - moves] = 1;
         while ((move[skip[move - moves]]&*move) == *move) ++skip[move - moves];
     }
