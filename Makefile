@@ -19,6 +19,10 @@ analyze: $(ANALYZE_OBJS)
 arbiter: $(ARBITER_OBJS)
 	$(CC) $(LDFLAGS) -o arbiter $(ARBITER_OBJS) $(LDLIBS)
 
+runguard: runguard.c
+	# Can be used in conjunction with the arbiter
+	$(CC) -o $@ -Wall -O2 -m32 $^
+
 benchmark: $(BENCHMARK_OBJS)
 	$(CC) $(LDFLAGS) -o benchmark $(BENCHMARK_OBJS) $(LDLIBS)
 

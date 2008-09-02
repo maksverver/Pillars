@@ -130,10 +130,10 @@ static void print_cdata(const char *msg)
 
 static void player_error(const char *msg, const char *line)
 {
-    *(!(turn%2) ? &player1_error : &player2_error) = msg;
-    *(!(turn%2) ? &player1_line : &player2_line) = line;
-    score[turn%2] = 0;
+    *((turn%2) ? &player2_error : &player1_error) = msg;
+    *((turn%2) ? &player2_line  : &player1_line) = line;
     winner = (turn+1)%2;
+    score[turn%2] = 0;
     score[winner] = 18 + (joker[winner] == -1 ? board_empty_area(&board)/10
                                               : bonus[winner]);
 }
@@ -201,13 +201,50 @@ static void print_failure(int id, const char *error, const char *line)
     printf("<error>");
     print_cdata(error);
     printf("</error>\n");
-    if (player1_line != NULL)
+    if (line != NULL)
     {
         printf("<line>");
         print_cdata(line);
         printf("</line>\n");
     }
     printf("</failure>\n");
+}
+
+static void print_pillars()
+{
+    Point p;
+    char buf[3];
+
+    printf("<pillars perm=\"%d\">\n", boardnum);
+    for (p.r = 0; p.r < 10; ++p.r)
+    {
+        for (p.c = 0; p.c < 10; ++p.c)
+        {
+            if (board[p.r][p.c] == -1)
+            {
+                point_encode(&p, buf);
+                printf("<point>%s</point>\n", buf);
+            }
+        }
+    }
+    printf("</pillars>\n");
+}
+
+static void print_moves()
+{
+    int n;
+    Rect move;
+    char buf[5];
+
+    printf("<moves count=\"%d\">\n", turn);
+    for (n = 0; n < turn; ++n)
+    {
+        board_get_move(&board, &move, n);
+        rect_encode(&move, buf);
+        printf( "<rect>%s%s</rect>\n",
+                (joker[0] == n || joker[1] == n) ? "!" : "", buf );
+    }
+    printf("</moves>\n");
 }
 
 static void print_status()
@@ -218,9 +255,11 @@ static void print_status()
 
     printf("<?xml version=\"1.0\"?>\n");
     printf("<game>\n");
-    printf("<board number=\"%d\">%s</board>\n", boardnum, buf);
+    printf("<board>%s</board>\n", buf);
+    print_pillars();
+    print_moves();
     printf("<result winner=\"%d\" score1=\"%d\" score2=\"%d\">"
-           "Player %d won! Score: %d-%d.</result>\n",
+           "player %d won! Score: %d-%d.</result>\n",
            winner + 1, score[0], score[1],
            winner + 1, score[0], score[1] );
     if (player1_error != NULL) print_failure(1, player1_error, player1_line);

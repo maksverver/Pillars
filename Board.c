@@ -296,3 +296,32 @@ int board_list_moves(Board *brd, Rect *moves)
     }
     return cnt;
 }
+
+bool board_get_move(Board *brd, Rect *move, int n)
+{
+    int r, c, cnt;
+    Rect m;
+
+    m.p.r = m.p.c = 10;
+    m.q.r = m.q.c = 0;
+    cnt = 0;
+    for (r = 0; r < 10; ++r)
+    {
+        for (c = 0; c < 10; ++c)
+        {
+            if ((*brd)[r][c] == n)
+            {
+                if (r < m.p.r) m.p.r = r;
+                if (c < m.p.c) m.p.c = c;
+                if (r >= m.q.r) m.q.r = r + 1;
+                if (c >= m.q.c) m.q.c = c + 1;
+                cnt += 1;
+            }
+        }
+    }
+
+    if (cnt == 0 || cnt != (m.q.r - m.p.r)*(m.q.c - m.p.c)) return false;
+
+    *move = m;
+    return true;
+}
