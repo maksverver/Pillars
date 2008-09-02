@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
     printf("Short board description: %s\n", buf);
 
     printf("\nAnalysing groups...\n");
-    board_truncate(&b);
+    board_flatten(&b);
     analysis_identify_groups(&b, &gi);
     board_print(&b, stdout);
     printf("%d groups identified\n", gi.num_groups);

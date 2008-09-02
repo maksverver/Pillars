@@ -14,11 +14,14 @@ typedef struct NVCacheEntry
     signed char nvalue;
 } NVCacheEntry;
 
+HashTable *nvcache;
+
+
 /* worker function -- defined elsewhere */
 int nvalue_work(int grp_size);
 
 /* Determine the nim value for the given group. */
-static int nvalue(Board *brd, GroupInfo *gi, int g)
+static int nvalue_old(Board *brd, GroupInfo *gi, int g)
 {
     Mask mask, *move;
     int num_moves, result;
@@ -114,6 +117,68 @@ static int nvalue(Board *brd, GroupInfo *gi, int g)
     return result;
 }
 
+typedef struct NewCacheEntry
+{
+    Board board;
+    NV nvalue;
+} NewCacheEntry;
+
+HashTable *new_cache;
+
+/* Determine the nim value for the given group. */
+static int nvalue(Board *brd, GroupInfo *gi, int g)
+{
+    Board neg;
+    int r, c;
+    NV nval, child_nval;
+    Rect moves[MAX_MOVES];
+    int num_moves, n, child_g;
+    GroupInfo child_gi;
+    unsigned nvals;
+
+    memset(neg, -1, sizeof(neg));
+    for (r = gi->bounds[g].p.r; r < gi->bounds[g].q.r; ++r)
+    {
+        for (c = gi->bounds[g].p.c; c < gi->bounds[g].q.c; ++c)
+        {
+            if ((*brd)[r][c] == g + 1) neg[r - gi->bounds[g].p.r][c - gi->bounds[g].p.c] = 0;
+        }
+    }
+
+    NewCacheEntry *e = HT_get(new_cache, &neg);
+    if (e != NULL)
+    {
+        assert(memcmp(&neg, &(e->board), sizeof(Board))== 0);
+        return e->nvalue;
+    }
+
+    num_moves = board_list_moves(&neg, moves);
+    nvals = 0;
+    for (n = 0; n < num_moves; ++n)
+    {
+        board_fill(&neg, &moves[n], -1);
+        analysis_identify_groups(&neg, &child_gi);
+        child_nval = 0;
+        for (child_g = 0; child_g < child_gi.num_groups; ++child_g)
+        {
+            child_nval ^= nvalue(&neg, &child_gi, child_g);
+        }
+        nvals |= (1<<child_nval);
+        board_clear(&neg);
+        board_fill(&neg, &moves[n], 0);
+    }
+
+    nval = 0;
+    while (nvals & (1u << (int)nval)) ++nval;
+
+    e = malloc(sizeof(NewCacheEntry));
+    memcpy(e->board, neg, sizeof(Board));
+    e->nvalue = nval;
+    HT_set(new_cache, &(e->board), e, NULL, NULL);
+
+    return nval;
+}
+
 /* Flood fill the board from a specific position,
    filling empty squares with group (gi->num_groups + 1). */
 static int fill(Board *brd, GroupInfo *gi, int r, int c)
@@ -139,6 +204,9 @@ void analysis_initialize()
     assert(sizeof(dummy.board) == 13);
     nvcache = HT_create(sizeof(dummy.board), 1000007);
     assert(nvcache != NULL);
+
+    new_cache = HT_create(sizeof(Board), 3000007);
+    assert(new_cache != NULL);
 }
 
 void analysis_identify_groups(Board *brd, GroupInfo *gi)
@@ -185,7 +253,7 @@ int analysis_value_moves(Board *brd_in, Rect *moves, int *values)
 
         /* Construct the board after executing the i-th move */
         memcpy(brd, brd_in, sizeof(brd));
-        board_truncate(&brd);
+        board_flatten(&brd);
         board_fill(&brd, &moves[move], -1);
         analysis_identify_groups(&brd, &gi);
         analysis_nim_values(&brd, &gi);

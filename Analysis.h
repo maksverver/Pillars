@@ -34,7 +34,7 @@ typedef struct GroupInfo
 /* Initialize the analysis module */
 void analysis_initialize();
 
-/* Identifies groups in the board. Input must be a truncated board.
+/* Identifies groups in the board. Input must be a flattened board.
    Board is modified so that squares belonging to group 'g' are marked with
    byte g+1. Does not fill in nim values. */
 void analysis_identify_groups(Board *brd, GroupInfo *gi);

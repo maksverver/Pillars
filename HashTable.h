@@ -17,6 +17,9 @@ HashTable *HT_create(size_t key_size, size_t index_size);
 /* Destroy a hash table. */
 void HT_destroy(HashTable *ht);
 
+/* Returns the number of entries stored in the hash table. */
+size_t HT_size(HashTable const *ht);
+
 /* Update an entry.
    Returns wether an existing entry was overwritten; if so, *old_key and
    *old_value are set to the old key and value pointers. */

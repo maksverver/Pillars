@@ -65,6 +65,11 @@ void HT_destroy(HashTable *ht)
     free(ht);
 }
 
+size_t HT_size(HashTable const *ht)
+{
+    return ht->size;
+}
+
 bool HT_set(HashTable *ht,
             void const *key, void const *value,
             void **old_key, void **old_value)

@@ -123,7 +123,7 @@ void board_print(Board *brd, FILE *fp)
     }
 }
 
-void board_truncate(Board *brd)
+void board_flatten(Board *brd)
 {
     int n;
     Field *flds;
