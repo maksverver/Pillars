@@ -19,6 +19,8 @@ static int turn;
 static int joker[2], bonus[2];
 static int winner, score[2];
 static FILE *fpin[2], *fpout[2];
+static const char *player1_error = NULL, *player1_line = NULL;
+static const char *player2_error = NULL, *player2_line = NULL;
 
 static void create_process( const char *command, const char *logfile,
                             FILE **fpin, FILE **fpout )
@@ -102,10 +104,34 @@ static void initialize()
     fflush(fpout[0]);
 }
 
+static void print_cdata(const char *msg)
+{
+    while (*msg)
+    {
+        int i = *(unsigned char*)msg++;
+        if (i < 32 || i >= 127)
+        {
+            printf("&#%d;", i);
+        }
+        else
+        {
+            switch (i)
+            {
+            case '<':  printf("&lt;"); break;
+            case '>':  printf("&gt;"); break;
+            case '&':  printf("&amp;"); break;
+            case '"':  printf("&quot;"); break;
+            case '\'': printf("&apos;"); break;
+            default:   putchar(i);
+            }
+        }
+    }
+}
+
 static void player_error(const char *msg, const char *line)
 {
-    printf("Player %d failed: %s\n", 1 + turn%2, msg);
-    if (line != NULL) printf("Line received was: %s\n", line);
+    *(!(turn%2) ? &player1_error : &player2_error) = msg;
+    *(!(turn%2) ? &player1_line : &player2_line) = line;
     score[turn%2] = 0;
     winner = (turn+1)%2;
     score[winner] = 18 + (joker[winner] == -1 ? board_empty_area(&board)/10
@@ -169,17 +195,37 @@ static bool process_move()
     return true;
 }
 
+static void print_failure(int id, const char *error, const char *line)
+{
+    printf("<failure player=\"%d\">\n", id);
+    printf("<error>");
+    print_cdata(error);
+    printf("</error>\n");
+    if (player1_line != NULL)
+    {
+        printf("<line>");
+        print_cdata(line);
+        printf("</line>\n");
+    }
+    printf("</failure>\n");
+}
+
 static void print_status()
 {
     char buf[201];
-    printf("Board #%d\n", boardnum);
+
     board_encode_full(&board, buf);
-    printf("%s\n", buf);
-    board_print(&board, stdout);
-    if (winner != -1)
-    {
-        printf("Player %d won! Score: %d-%d.\n", winner + 1, score[0], score[1]);
-    }
+
+    printf("<?xml version=\"1.0\"?>\n");
+    printf("<game>\n");
+    printf("<board number=\"%d\">%s</board>\n", boardnum, buf);
+    printf("<result winner=\"%d\" score1=\"%d\" score2=\"%d\">"
+           "Player %d won! Score: %d-%d.</result>\n",
+           winner + 1, score[0], score[1],
+           winner + 1, score[0], score[1] );
+    if (player1_error != NULL) print_failure(1, player1_error, player1_line);
+    if (player2_error != NULL) print_failure(2, player2_error, player2_line);
+    printf("</game>\n");
 }
 
 int main(int argc, char *argv[])
@@ -207,8 +253,6 @@ int main(int argc, char *argv[])
     initialize();
     while (process_move())
     {
-        fprintf(stdout, ".");
-        fflush(stdout);
         if (board_empty_area(&board) == 0)
         {
             winner = turn%2;
@@ -217,7 +261,6 @@ int main(int argc, char *argv[])
             break;
         }
     }
-    fprintf(stdout, "\r");
     print_status();
 
     return 0;

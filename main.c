@@ -112,7 +112,7 @@ int main()
     const char *line;
     int r, c, n;
     int turn;
-    double t0, t1, total_time;
+    double total_time;
     bool joker, use_joker;
 
     time_reset();
