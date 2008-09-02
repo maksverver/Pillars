@@ -21,7 +21,7 @@
     Coredumps               (always)        setrlimit(RLIMIT_CORE, 0)
     Process/thread creation -s              syscall wrapper
     Socket access           -s              syscall wrapper
-    Clock time limit        -t              alarm()
+    Clock time limit        -T              alarm()
     CPU time limit          -t              setrlimit(RLIMIT_CPU)
     Memory limit            -m              setrlimit(RLIMIT_AS)
     Output size             -o              setrlimit(RLIMIT_FSIZE)
@@ -364,7 +364,8 @@ void usage(int status)
 "must be given relative to the filesystem root (specified with -r).\n"
 "\n"
 "Options are:\n"
-"   -t <time>   Maximum execution time (in seconds)\n"
+"   -T <time>   Maximum execution time (in wall-clock seconds)\n"
+"   -t <time>   Maximum execution time (in CPU seconds)\n"
 "   -m <size>   Maximum virtual memory allowed (in bytes)\n"
 "   -o <size>   Maximum output size (in bytes)\n"
 "   -r <dir>    Filesystem root (root only!)\n"
@@ -399,18 +400,24 @@ int main(int argc, char *argv[])
     if (argc < 2)
         usage(0);
 
-    while ((n = getopt(argc, argv, "t:m:o:r:u:sv")) != -1)
+    while ((n = getopt(argc, argv, "T:t:m:o:r:u:sv")) != -1)
     {
         char dummy;
         switch(n)
         {
+        case 'T':
+            if (sscanf(optarg, "%d%c", &limit_time_total, &dummy) != 1)
+            {
+                fprintf(stderr, "Invalid time limit: %s\n", optarg);
+                exit(1);
+            }
+            break;
         case 't':
             if (sscanf(optarg, "%d%c", &limit_time_cpu, &dummy) != 1)
             {
                 fprintf(stderr, "Invalid time limit: %s\n", optarg);
                 exit(1);
             }
-            limit_time_total = 1 + (int)(limit_time_cpu*1.2);
             break;
         case 'm':
             limit_memory = parse_size(optarg);
