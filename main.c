@@ -65,9 +65,14 @@ void select_move(Board *brd, Rect *move, bool *use_joker)
     Rect moves[MAX_MOVES];
     int values[MAX_MOVES];
     int num_moves, n, cnt[5], best_val;
+    char buf[26];
 
+    board_encode_short(brd, buf);
+    info("Analyzing board: %s", buf);
+    /*
     info("Analyzing board:");
     board_print(brd, stderr);
+    */
     num_moves = analysis_value_moves(brd, moves, values);
     info("%d moves found.", num_moves);
     if (num_moves == 0)
@@ -107,7 +112,7 @@ int main()
     const char *line;
     int r, c, n;
     int turn;
-    double total_time;
+    double t0, t1, total_time;
     bool joker, use_joker;
 
     time_reset();
@@ -139,13 +144,18 @@ int main()
 
     turn = 0;
     joker = true;
-    while((line = next_line()) != NULL)
+    for (;;)
     {
         Rect move;
         char buf[64];
+        double t0, t1;
 
-        time_reset();
-        info("Received: %s", line);
+        t0 = time_now();
+        if ((line = next_line()) == NULL) break;
+        t1 = time_now();
+        info("Received %s (waited %.3fs)", line, t1 - t0);
+        t0 = t1;
+
         if (strcmp(line, "Start") == 0) goto start;
         if (!rect_decode(&move, line) || !board_is_valid_move(&board, &move))
         {
@@ -170,13 +180,13 @@ int main()
             rect_encode(&move, buf);
         }
         board_fill(&board, &move, ++turn);
-        total_time += time_now();
-        info("Time left: %.3fs\n", TIME_LIMIT - total_time);
-        info("Sending: %s", buf);
+        t1 = time_now();
+        total_time += t1 - t0;
+        info("Sending %s (calculated for %.3fs; %.3fs total)", buf, t1 - t0, total_time);
         fprintf(stdout, "%s\n", buf);
         fflush(stdout);
     }
-    info("Exiting (time used: %.3fs)", total_time);
+    info("Exiting (used %.3fs)", total_time);
 
     return 0;
 }
