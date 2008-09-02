@@ -11,6 +11,7 @@ int main()
 
     /* TODO: test with more boards */
     board_decode_short(&b, "0V0V0V0V0VVVVVVVVVVV");
+    board_print(&b, stdout);
     analysis_initialize();
     analysis_identify_groups(&b, &gi);
     analysis_nim_values(&b, &gi);

@@ -1,10 +1,10 @@
-CFLAGS=-g -ansi -Wall -Wextra -O2 -m32 -DLOCAL
+CFLAGS=-g -ansi -Wall -Wextra -O2 -m32
 LDFLAGS=-g -m32
 LDLIBS=-lm
 OBJS=Analysis.o Board.o HashTable.o nvalue_work.o
 ANALYZE_OBJS=analyze.o $(OBJS)
 ARBITER_OBJS=arbiter.o Board.o 
-BENCHMARK_OBJS=benchmark.o $(OBJS)
+BENCHMARK_SRCS=benchmark.c HashTable.c Board.c Analysis.c nvalue_work.c
 
 PLAYER_SRCS=Analysis.c Board.c Debug.c HashTable.c nvalue_work.c main.c
 PLAYER_OBJS=Analysis.o Board.o Debug.o HashTable.o nvalue_work.o main.o
@@ -23,8 +23,8 @@ runguard: runguard.c
 	# Can be used in conjunction with the arbiter
 	$(CC) -o $@ -Wall -O2 -m32 $^
 
-benchmark: $(BENCHMARK_OBJS)
-	$(CC) $(LDFLAGS) -o benchmark $(BENCHMARK_OBJS) $(LDLIBS)
+benchmark: $(BENCHMARK_SRCS)
+	$(CC) $(LDFLAGS) $(CFLAGS) -DANALYSIS_MAX_SIZE=25 -o benchmark $(BENCHMARK_SRCS) $(LDLIBS)
 
 player.c: $(PLAYER_SRCS) Analysis.h Board.h
 	./compile.pl $(PLAYER_SRCS) > player.c

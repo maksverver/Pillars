@@ -6,10 +6,8 @@
 
 #define MAX_GROUPS            50    /* max. number of groups on a board */
 
-#ifndef LOCAL   /* competition settings */
-#define ANALYSIS_MAX_SIZE    18    /* max. size of group for in-depth analysis */
-#else           /* local settings */
-#define ANALYSIS_MAX_SIZE    20    /* max. size of group for in-depth analysis */
+#ifndef ANALYSIS_MAX_SIZE
+#define ANALYSIS_MAX_SIZE     18    /* max. size of group for in-depth analysis */
 #endif
 
 /* Minimum size of shapes to cache */
