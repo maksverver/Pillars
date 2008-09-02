@@ -297,6 +297,8 @@ int board_list_moves(Board *brd, Rect *moves)
     return cnt;
 }
 
+/* Reconstruct the n-th move (zero based) from the given board,
+   or return false if this is impossible. */
 bool board_get_move(Board *brd, Rect *move, int n)
 {
     int r, c, cnt;
@@ -309,7 +311,7 @@ bool board_get_move(Board *brd, Rect *move, int n)
     {
         for (c = 0; c < 10; ++c)
         {
-            if ((*brd)[r][c] == n)
+            if ((*brd)[r][c] == n + 1)
             {
                 if (r < m.p.r) m.p.r = r;
                 if (c < m.p.c) m.p.c = c;
