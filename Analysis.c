@@ -15,17 +15,10 @@ typedef struct NVCacheEntry
 } NVCacheEntry;
 
 /* worker function -- defined elsewhere */
-int nvalue_new_work(int grp_size);
-
-/*
-static int mask_cmp(const void *ma, const void *mb)
-{
-    return *(Mask*)ma - *(Mask*)mb;
-}
-*/
+int nvalue_work(int grp_size);
 
 /* Determine the nim value for the given group. */
-static int nvalue_new(Board *brd, GroupInfo *gi, int g)
+static int nvalue(Board *brd, GroupInfo *gi, int g)
 {
     Mask mask, *move;
     int num_moves, result;
@@ -106,8 +99,6 @@ static int nvalue_new(Board *brd, GroupInfo *gi, int g)
     }
     moves[num_moves] = 0;   /* mark end of moves */
 
-    /* qsort(moves, num_moves, sizeof(Mask), mask_cmp); */
-
     /* Calculate move skip data */
     for (move = moves; *move != 0; ++move)
     {
@@ -116,7 +107,7 @@ static int nvalue_new(Board *brd, GroupInfo *gi, int g)
     }
 
     /* Calculate nim value (this takes the most time) */
-    result = nvalue_new_work(gi->size[g]);
+    result = nvalue_work(gi->size[g]);
 
     if (nvce != NULL) nvce->nvalue = result;
 
@@ -177,7 +168,7 @@ void analysis_nim_values(Board *brd, GroupInfo *gi)
     int n;
     for (n = 0; n < gi->num_groups; ++n)
     {
-        gi->nval[n] = nvalue_new(brd, gi, n);
+        gi->nval[n] = nvalue(brd, gi, n);
     }
 }
 

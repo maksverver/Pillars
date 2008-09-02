@@ -1,7 +1,7 @@
 #include "Analysis.h"
 
-/* Does the real work for nvalue_new */
-int nvalue_new_work(int grp_size)
+/* Does the real work for nvalue */
+int nvalue_work(int grp_size)
 {
     int n, nval;
     Mask mask, move;
