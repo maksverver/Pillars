@@ -91,7 +91,9 @@ bool HT_set(HashTable *ht,
 
 void *HT_get(HashTable const *ht, void const *key)
 {
-    return *find(ht, key);
+    Entry **e = find(ht, key);
+    if (*e == NULL) return NULL;
+    return (*e)->value;
 }
 
 bool HT_get_entry(HashTable const *ht,
