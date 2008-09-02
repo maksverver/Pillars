@@ -125,25 +125,112 @@ typedef struct NewCacheEntry
 
 HashTable *new_cache;
 
+static void mirror_horizontal(Board *brd, int h, int w)
+{
+    int r, c1, c2;
+    Field tmp;
+
+    for (r = 0; r < h; ++r)
+    {
+        c1 = 0; c2 = w - 1;
+        while (c1 < c2)
+        {
+            tmp = (*brd)[r][c1];
+            (*brd)[r][c1] = (*brd)[r][c2];
+            (*brd)[r][c2] = tmp;
+            c1 += 1;
+            c2 -= 1;
+        }
+    }
+}
+
+static void mirror_vertical(Board *brd, int h, int w)
+{
+    int r1, r2, c;
+    Field tmp;
+
+    for (c = 0; c < w; ++c)
+    {
+        r1 = 0; r2 = h - 1;
+        while (r1 < r2)
+        {
+            tmp = (*brd)[r1][c];
+            (*brd)[r1][c] = (*brd)[r2][c];
+            (*brd)[r2][c] = tmp;
+            r1 += 1;
+            r2 -= 1;
+        }
+    }
+}
+
+static void mirror_diagonal(Board *brd, int h, int w)
+{
+    Board tmp;
+    int r, c;
+
+    memset(&tmp, -1, sizeof(Board));
+    for (r = 0; r < h; ++r)
+    {
+        for (c = 0; c < w; ++c)
+        {
+            tmp[c][r] = (*brd)[r][c];
+        }
+    }
+    memcpy(brd, &tmp, sizeof(Board));
+}
+
 /* Determine the nim value for the given group. */
 static int nvalue(Board *brd, GroupInfo *gi, int g)
 {
-    Board neg;
-    int r, c;
+    Board opt, neg;
+    int r, c, h, w;
     NV nval, child_nval;
     Rect moves[MAX_MOVES];
     int num_moves, n, child_g;
     GroupInfo child_gi;
     unsigned nvals;
 
-    memset(neg, -1, sizeof(neg));
-    for (r = gi->bounds[g].p.r; r < gi->bounds[g].q.r; ++r)
+    h = gi->bounds[g].q.r - gi->bounds[g].p.r;
+    w = gi->bounds[g].q.c - gi->bounds[g].p.c;
+    memset(&opt, -1, sizeof(opt));
+    for (r = 0; r < h; ++r)
     {
-        for (c = gi->bounds[g].p.c; c < gi->bounds[g].q.c; ++c)
+        for (c = 0; c < w; ++c)
         {
-            if ((*brd)[r][c] == g + 1) neg[r - gi->bounds[g].p.r][c - gi->bounds[g].p.c] = 0;
+            if ((*brd)[r + gi->bounds[g].p.r][c + gi->bounds[g].p.c] == g + 1) opt[r][c] = 0;
         }
     }
+
+    /* Option 1 */
+    memcpy(&neg, &opt, sizeof(Board));
+
+    /* Option 2 */
+    mirror_horizontal(&opt, h, w);
+    if (memcmp(&neg, &opt, sizeof(Board)) < 0) memcpy(&neg, &opt, sizeof(Board));
+
+    /* Option 3 */
+    mirror_vertical(&opt, h, w);
+    if (memcmp(&neg, &opt, sizeof(Board)) < 0) memcpy(&neg, &opt, sizeof(Board));
+
+    /* Option 4 */
+    mirror_horizontal(&opt, h, w);
+    if (memcmp(&neg, &opt, sizeof(Board)) < 0) memcpy(&neg, &opt, sizeof(Board));
+
+    /* Option 5 */
+    mirror_diagonal(&opt, h, w);
+    if (memcmp(&neg, &opt, sizeof(Board)) < 0) memcpy(&neg, &opt, sizeof(Board));
+
+    /* Option 6 */
+    mirror_horizontal(&opt, w, h);
+    if (memcmp(&neg, &opt, sizeof(Board)) < 0) memcpy(&neg, &opt, sizeof(Board));
+
+    /* Option 7 */
+    mirror_vertical(&opt, w, h);
+    if (memcmp(&neg, &opt, sizeof(Board)) < 0) memcpy(&neg, &opt, sizeof(Board));
+
+    /* Option 8 */
+    mirror_horizontal(&opt, w, h);
+    if (memcmp(&neg, &opt, sizeof(Board)) < 0) memcpy(&neg, &opt, sizeof(Board));
 
     NewCacheEntry *e = HT_get(new_cache, &neg);
     if (e != NULL)
