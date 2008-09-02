@@ -269,15 +269,28 @@ static void print_status()
 
 int main(int argc, char *argv[])
 {
-    if (argc != 3 && argc != 4)
+    if (argc == 3 || argc == 4)
+    {
+        command1 = argv[1];
+        command2 = argv[2];
+        boardnum = argc == 4 ? atoi(argv[3]) : 0;
+    }
+    else
+    if (argc == 5 || argc == 6)
+    {
+        command1 = argv[1];
+        logfile1 = argv[2];
+        command2 = argv[3];
+        logfile2 = argv[4];
+        boardnum = argc == 6 ? atoi(argv[5]) : 0;
+    }
+    else
     {
         printf("usage: arbiter <command1> <command2> [<board>]\n"
+               "       arbiter <command1> <logfile1> <command2> <logfile2> [<board>]\n"
                "       (board must be between 1 and 3628800, inclusive)\n");
         return 1;
     }
-    command1 = argv[1];
-    command2 = argv[2];
-    boardnum = argc == 4 ? atoi(argv[3]) : 0;
     if (boardnum < 1 || boardnum >= NUM_BOARDS)
     {
         /* Generate random board number */
