@@ -26,7 +26,6 @@ size_t HT_size(HashTable const *ht);
    Returns wether an existing entry was overwritten; if so, *old_key and
    *old_value are set to the old key and value pointers. */
 bool HT_set(HashTable *ht,
-            uint32_t key_hash,
             void const *key, void const *value,
             void **old_key, void **old_value);
 

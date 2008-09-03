@@ -150,20 +150,11 @@ uint32_t hash_data[100] = {
 static uint32_t hash_board(void const *data, size_t len)
 {
     uint32_t h = 0;
-    int x = 0;
     size_t n;
 
     for (n = 0; n < len; ++n)
     {
-        if (((char*)data)[n])
-        {
-            h ^= hash_data[n];
-            x = 0;
-        }
-        else
-        {
-            if (++x == 10) break;
-        }
+        h ^= ((char*)data)[n] * hash_data[n];
     }
     return h;
 }
