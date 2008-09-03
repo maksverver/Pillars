@@ -13,6 +13,7 @@ typedef struct Entry
 struct HashTable
 {
     size_t key_size, index_size, size;
+    uint32_t (*hash_func)(void const *data, size_t len);
     Entry **index;
 };
 
@@ -30,12 +31,13 @@ static uint32_t fnv1(void const *data, size_t len)
 
 static Entry **find(HashTable const *ht, void const *key)
 {
-    Entry **e = ht->index + fnv1(key, ht->key_size)%ht->index_size;
+    Entry **e = ht->index + (*ht->hash_func)(key, ht->key_size)%ht->index_size;
     while (*e != NULL && memcmp((*e)->key, key, ht->key_size) != 0) e = &(*e)->next;
     return e;
 }
 
-HashTable *HT_create(size_t key_size, size_t index_size)
+HashTable *HT_create(size_t key_size, size_t index_size,
+                     uint32_t (*hash_func)(void const *data, size_t len))
 {
     HashTable *ht;
 
@@ -43,6 +45,7 @@ HashTable *HT_create(size_t key_size, size_t index_size)
     assert(ht != NULL);
     ht->key_size   = key_size;
     ht->index_size = index_size;
+    ht->hash_func  = hash_func == NULL ? &fnv1 : hash_func;
     ht->size       = 0;
     ht->index      = (void*)((char*)ht + sizeof(HashTable));
 

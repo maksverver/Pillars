@@ -2,6 +2,7 @@
 #define HASH_TABLE_H_INCLUDED
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdbool.h>
 
 /* Hash table data structure with constant-sized keys and a fixed index size.
@@ -12,7 +13,8 @@
 typedef struct HashTable HashTable;
 
 /* Create a new hash table. */
-HashTable *HT_create(size_t key_size, size_t index_size);
+HashTable *HT_create(size_t key_size, size_t index_size,
+                     uint32_t (*hash_func)(const void *data, size_t len) );
 
 /* Destroy a hash table. */
 void HT_destroy(HashTable *ht);

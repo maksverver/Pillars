@@ -125,6 +125,24 @@ typedef struct NewCacheEntry
 
 HashTable *new_cache;
 
+static uint32_t hash_board(void const *data, size_t len)
+{
+    const uint32_t x = 0x01010101u;
+    const uint32_t *d = data;
+    uint32_t h = 0;
+    size_t n = len/32;
+
+    d = data;
+    n = len/32;
+    while (n-- > 0)
+    {
+        h ^= ((d[0]&x) << 0)|((d[1]&x) << 1)|((d[2]&x)<<2)|((d[3]&x)<<3) |
+             ((d[4]&x) << 4)|((d[5]&x) << 5)|((d[6]&x)<<6)|((d[7]&x)<<7) ;
+        d += 8;
+    }
+    return h;
+}
+
 static void mirror_horizontal(Board *brd, int h, int w, Board *dst)
 {
     int r, c1, c2;
@@ -302,10 +320,10 @@ void analysis_initialize()
     NVCacheEntry dummy;
     (void)dummy;
     assert(sizeof(dummy.board) == 13);
-    nvcache = HT_create(sizeof(dummy.board), 1000007);
+    nvcache = HT_create(sizeof(dummy.board), 1000007, NULL);
     assert(nvcache != NULL);
 
-    new_cache = HT_create(sizeof(Board), 3000007);
+    new_cache = HT_create(sizeof(Board), 3000007, hash_board);
     assert(new_cache != NULL);
 }
 
