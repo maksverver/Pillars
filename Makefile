@@ -1,4 +1,4 @@
-CFLAGS=-g -ansi -Wall -Wextra -O2 -m64
+CFLAGS=-g -ansi -Wall -Wextra -O0 -m64
 LDFLAGS=-g -m64
 LDLIBS=-lm
 OBJS=Analysis.o Board.o HashTable.o nvalue_work.o

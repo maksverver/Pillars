@@ -166,10 +166,63 @@ static void mirror_diagonal(Board *brd, int h, int w, Board *dst)
     }
 }
 
+static void store_board(Board *brd, NV nval)
+{
+    NewCacheEntry *e, *old;
+
+    e = malloc(sizeof(NewCacheEntry));
+    memcpy(&(e->board), brd, sizeof(Board));
+    e->nvalue = nval;
+
+    old = NULL;
+    HT_set(new_cache, e, e, NULL, (void**)&old);
+    if (old != NULL) free(old);
+}
+
+static void store_boards(Board *brd, int h, int w, NV nval)
+{
+    Board a, b;
+
+    /* Option 1 */
+    store_board(brd, nval);
+
+    /* Option 2 */
+    memset(&b, -1, sizeof(Board));
+    mirror_horizontal(brd, h, w, &b);
+    store_board(&b, nval);
+
+    /* Option 3 */
+    memset(&a, -1, sizeof(Board));
+    mirror_vertical(&b, h, w, &a);
+    store_board(&a, nval);
+
+    /* Option 4 */
+    mirror_horizontal(&a, h, w, &b);
+    store_board(&b, nval);
+
+    /* Option 5 */
+    memset(&a, -1, sizeof(Board));
+    mirror_diagonal(&b, h, w, &a);
+    store_board(&a, nval);
+
+    /* Option 6 */
+    memset(&b, -1, sizeof(Board));
+    mirror_horizontal(&a, w, h, &b);
+    store_board(&b, nval);
+
+    /* Option 7 */
+    mirror_vertical(&b, w, h, &a);
+    store_board(&a, nval);
+
+    /* Option 8 */
+    mirror_horizontal(&a, w, h, &b);
+    store_board(&b, nval);
+}
+
 /* Determine the nim value for the given group. */
 static int nvalue(Board *brd, GroupInfo *gi, int g)
 {
-    Board a, b, neg;
+    Board neg;
     int r, c, h, w;
     NV nval, child_nval;
     Rect moves[MAX_MOVES];
@@ -177,64 +230,30 @@ static int nvalue(Board *brd, GroupInfo *gi, int g)
     GroupInfo child_gi;
     unsigned nvals;
 
+    memset(&neg, -1, sizeof(Board));
     h = gi->bounds[g].q.r - gi->bounds[g].p.r;
     w = gi->bounds[g].q.c - gi->bounds[g].p.c;
-    memset(&a, -1, sizeof(Board));
-    memset(&b, -1, sizeof(Board));
     for (r = 0; r < h; ++r)
     {
         for (c = 0; c < w; ++c)
         {
-            if ((*brd)[r + gi->bounds[g].p.r][c + gi->bounds[g].p.c] == g + 1) a[r][c] = 0;
+            if ((*brd)[r + gi->bounds[g].p.r][c + gi->bounds[g].p.c] == g + 1) neg[r][c] = 0;
         }
     }
-
-    /* Option 1 */
-    memcpy(&neg, &a, sizeof(Board));
-
-    /* Option 2 */
-    mirror_horizontal(&a, h, w, &b);
-    if (memcmp(&neg, &b, sizeof(Board)) < 0) memcpy(&neg, &b, sizeof(Board));
-
-    /* Option 3 */
-    mirror_vertical(&b, h, w, &a);
-    if (memcmp(&neg, &a, sizeof(Board)) < 0) memcpy(&neg, &a, sizeof(Board));
-
-    /* Option 4 */
-    mirror_horizontal(&a, h, w, &b);
-    if (memcmp(&neg, &b, sizeof(Board)) < 0) memcpy(&neg, &b, sizeof(Board));
-
-    /* Option 5 */
-    memset(&a, -1, sizeof(Board));
-    mirror_diagonal(&b, h, w, &a);
-    if (memcmp(&neg, &a, sizeof(Board)) < 0) memcpy(&neg, &a, sizeof(Board));
-
-    /* Option 6 */
-    memset(&b, -1, sizeof(Board));
-    mirror_horizontal(&a, w, h, &b);
-    if (memcmp(&neg, &b, sizeof(Board)) < 0) memcpy(&neg, &b, sizeof(Board));
-
-    /* Option 7 */
-    mirror_vertical(&b, w, h, &a);
-    if (memcmp(&neg, &a, sizeof(Board)) < 0) memcpy(&neg, &a, sizeof(Board));
-
-    /* Option 8 */
-    mirror_horizontal(&a, w, h, &b);
-    if (memcmp(&neg, &b, sizeof(Board)) < 0) memcpy(&neg, &b, sizeof(Board));
 
     /* Look up in hash table */
     NewCacheEntry *e = HT_get(new_cache, &neg);
     if (e != NULL)
     {
-        assert(memcmp(&neg, &(e->board), sizeof(Board))== 0);
         return e->nvalue;
     }
 
+    /* Consider all possible moves */
     num_moves = board_list_moves(&neg, moves);
     nvals = 0;
     for (n = 0; n < num_moves; ++n)
     {
-        board_fill(&neg, &moves[n], -1);
+        board_fill(&neg, &moves[n], 127);
         analysis_identify_groups(&neg, &child_gi);
         child_nval = 0;
         for (child_g = 0; child_g < child_gi.num_groups; ++child_g)
@@ -242,17 +261,20 @@ static int nvalue(Board *brd, GroupInfo *gi, int g)
             child_nval ^= nvalue(&neg, &child_gi, child_g);
         }
         nvals |= (1<<child_nval);
-        board_clear(&neg);
-        board_fill(&neg, &moves[n], 0);
+        for (r = 0; r < h; ++r)
+        {
+            for (c = 0; c < w; ++c)
+            {
+                if (neg[r][c] > 0) neg[r][c] = 0;
+            }
+        }
     }
 
+    /* Determine minimum excluded ordinal */
     nval = 0;
     while (nvals & (1u << (int)nval)) ++nval;
 
-    e = malloc(sizeof(NewCacheEntry));
-    memcpy(e->board, neg, sizeof(Board));
-    e->nvalue = nval;
-    HT_set(new_cache, &(e->board), e, NULL, NULL);
+    store_boards(&neg, h, w, nval);
 
     return nval;
 }
