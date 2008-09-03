@@ -12,7 +12,7 @@ int main()
     for (n = 0; n < 100; ++n)
     {
         fread(&v, sizeof(v), 1, fp);
-        printf("0x%08xu,%c", v, n%5==4 ?'\n':' ');
+        printf("0x%08xu,%c", v, n%4==3 ?'\n':' ');
     }
     fclose(fp);
     return 0;
