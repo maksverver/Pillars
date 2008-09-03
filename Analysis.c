@@ -121,7 +121,7 @@ uint64_t hash_data[4][100] = {
         0x8c8600bbu, 0xcf4e6a58u, 0xb247ce6au, 0x4228be94u
     } };
 
-#define HASH_TABLE_SIZE (30000001)
+#define HASH_TABLE_SIZE (1000001)
 
 typedef struct GroupId
 {
@@ -138,6 +138,24 @@ typedef struct GroupCacheEntry
 } GroupCacheEntry;
 
 GroupCacheEntry *group_cache[HASH_TABLE_SIZE];
+
+void debug_cache_info()
+{
+    int n;
+    int total = 0, cnt[21] = { };
+
+    GroupCacheEntry *gce;
+    for (n = 0; n < HASH_TABLE_SIZE; ++n)
+    {
+        int c = 0;
+        for (gce = group_cache[n]; gce != NULL; gce = gce->next) ++c;
+        cnt[c > 20 ? 20 :c] += 1;
+        total += c;
+    }
+    printf( "Total cache population: %d (size: %d; %2.3f%% full)\n",
+            total, HASH_TABLE_SIZE, 100.0*total/HASH_TABLE_SIZE );
+    for (n = 0; n <= 20; ++n) printf("%4d: %12d\n", n, cnt[n]);
+}
 
 static void mirror_horizontal(Group *src, Group *dst)
 {
@@ -321,8 +339,9 @@ static void group_isolate(Group *src, int r, int c, Group *dst)
     /* Translate isolated group to upper-left corner */
     dst->height = b.q.r - b.p.r + 1;
     dst->width  = b.q.c - b.p.c + 1;
+    assert(sizeof(dst->board[0]) == 10);
     memmove(&dst->board[0][0], &dst->board[b.p.r][b.p.c],
-        10*(b.q.r - b.p.r) + (b.q.c - b.p.c + 1));
+        sizeof(dst->board[0])*(b.q.r - b.p.r) + (b.q.c - b.p.c + 1));
 }
 
 static void group_hash(Group *gr, GroupId *id)
@@ -373,6 +392,47 @@ static void group_cache_store(GroupCacheEntry **gce, GroupId *id, NV nval)
     (*gce)->nvalue = nval;
 }
 
+/* Stores an nvalue for the given group, if it is not yet stored */
+static void insert_new_nval(Group *gr, NV nval)
+{
+    GroupCacheEntry **gce;
+    GroupId id;
+
+    group_hash(gr, &id);
+    gce = group_cache_lookup(&id);
+    if (*gce != NULL) return;
+    group_cache_store(gce, &id, nval);
+}
+
+/* Stores alternate (but equivalent) configurations of the given group
+   in the group cache.
+   NB: Assumes the primary configuration has already been stored! */
+static void group_cache_store_alternatives(Group *gr, NV nval)
+{
+    Group a, b;
+
+    mirror_horizontal(gr, &a);
+    insert_new_nval(&a, nval);
+
+    mirror_vertical(&a, &b);
+    insert_new_nval(&b, nval);
+
+    mirror_vertical(&b, &a);
+    insert_new_nval(&a, nval);
+
+    mirror_diagonal(&a, &b);
+    insert_new_nval(&b, nval);
+
+    mirror_horizontal(&b, &a);
+    insert_new_nval(&a, nval);
+
+    mirror_vertical(&a, &b);
+    insert_new_nval(&b, nval);
+
+    mirror_vertical(&b, &a);
+    insert_new_nval(&a, nval);
+}
+
 /* Determine the nim value for a group.
    NB: modifies the argument to normalize it! */
 static NV group_nvalue(Group *gr)
@@ -382,9 +442,6 @@ static NV group_nvalue(Group *gr)
     unsigned nvals;             /* nim-values of reachable states */
     NV nval;                    /* group nim-value (result) */
     Rect m;                     /* move */
-
-    /* First, normalize the group */
-    group_normalize(gr);
 
     /* Look up in cache */
     group_hash(gr, &id);
@@ -456,6 +513,7 @@ static NV group_nvalue(Group *gr)
 
     /* Store in cache */
     group_cache_store(gce, &id, nval);
+    group_cache_store_alternatives(gr, nval);
 
     return nval;
 }

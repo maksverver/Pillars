@@ -22,7 +22,7 @@ runguard: runguard.c
 	# Can be used in conjunction with the arbiter
 	$(CC) -o $@ -Wall -O2 -m32 $^
 
-benchmark: $(BENCHMARK_SRCS)
+benchmark:
 	$(CC) $(LDFLAGS) $(CFLAGS) -DANALYSIS_MAX_SIZE=25 -o benchmark $(BENCHMARK_SRCS) $(LDLIBS)
 
 player.c: $(PLAYER_SRCS) Analysis.h Board.h
@@ -40,4 +40,4 @@ clean:
 distclean: clean
 	rm -f $(EXECUTABLES) player.c
 
-.PHONY: all clean distclean
+.PHONY: all clean distclean benchmark

@@ -15,6 +15,8 @@ int nval = 9;
 const char *board_desc = "0V0V0V0V0VVVVVVVVVVV";
 int nval = 8;
 
+void debug_cache_info();
+
 int main()
 {
     Board b;
@@ -39,5 +41,6 @@ int main()
     }
     */
     assert(gi.nval[0] == nval);
+    debug_cache_info();
     return 0;
 }

@@ -125,20 +125,28 @@ void board_print(Board *brd, FILE *fp)
 
 void board_flatten(Board *brd)
 {
-    int n;
-    Field *flds;
+    int r, c;
 
-    flds = &((*brd)[0][0]);
-    for (n = 0; n < 100; ++n) flds[n] = flds[n] == 0 ? 0 : -1;
+    for (r = 0; r < 10; ++r)
+    {
+        for (c = 0; c < 10; ++c)
+        {
+            (*brd)[r][c] = (*brd)[r][c] == 0 ? 0 : -1;
+        }
+    }
 }
 
 void board_clear(Board *brd)
 {
-    int n;
-    Field *flds;
+    int r, c;
 
-    flds = &((*brd)[0][0]);
-    for (n = 0; n < 100; ++n) flds[n] = flds[n] >= 0 ? 0 : -1;
+    for (r = 0; r < 10; ++r)
+    {
+        for (c = 0; c < 10; ++c)
+        {
+            (*brd)[r][c] = (*brd)[r][c] >= 0 ? 0 : -1;
+        }
+    }
 }
 
 bool board_is_valid_move(Board *brd, Rect *rect)
