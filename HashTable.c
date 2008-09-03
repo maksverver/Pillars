@@ -6,6 +6,7 @@
 typedef struct Entry
 {
     struct Entry *next;
+    uint32_t key_hash;
     void *key;
     void *value;
 } Entry;
@@ -29,10 +30,13 @@ static uint32_t fnv1(void const *data, size_t len)
     return res;
 }
 
-static Entry **find(HashTable const *ht, void const *key)
+static Entry **find(HashTable const *ht, uint32_t h, void const *key)
 {
-    Entry **e = ht->index + (*ht->hash_func)(key, ht->key_size)%ht->index_size;
-    while (*e != NULL && memcmp((*e)->key, key, ht->key_size) != 0) e = &(*e)->next;
+    Entry **e;
+    for (e = ht->index + h%ht->index_size; *e != NULL; e = &(*e)->next)
+    {
+        if ((*e)->key_hash == h && memcmp((*e)->key, key, ht->key_size) == 0) break;
+    }
     return e;
 }
 
@@ -73,25 +77,34 @@ size_t HT_size(HashTable const *ht)
     return ht->size;
 }
 
+
 bool HT_set(HashTable *ht,
             void const *key, void const *value,
             void **old_key, void **old_value)
 {
-    Entry **e = find(ht, key);
+    uint32_t h = (*ht->hash_func)(key, ht->key_size);
+    Entry **e = find(ht, h, key);
+
     if (*e != NULL)
     {
         if (old_key)   *old_key   = (*e)->key;
         if (old_value) *old_value = (*e)->value;
-        (*e)->key   = (void*)key;
-        (*e)->value = (void*)value;
+
+        (*e)->key_hash  = h;
+        (*e)->key       = (void*)key;
+        (*e)->value     = (void*)value;
+
         return true;
     }
     else
     {
         *e = malloc(sizeof(Entry));
         assert(*e != NULL);
-        (*e)->key   = (void*)key;
-        (*e)->value = (void*)value;
+
+        (*e)->key_hash  = h;
+        (*e)->key       = (void*)key;
+        (*e)->value     = (void*)value;
+
         ht->size += 1;
         return false;
     }
@@ -99,7 +112,8 @@ bool HT_set(HashTable *ht,
 
 void *HT_get(HashTable const *ht, void const *key)
 {
-    Entry **e = find(ht, key);
+    uint32_t h = (*ht->hash_func)(key, ht->key_size);
+    Entry **e = find(ht, h, key);
     if (*e == NULL) return NULL;
     return (*e)->value;
 }
@@ -109,24 +123,26 @@ bool HT_get_entry(HashTable const *ht,
                   void **old_key,
                   void **old_value)
 {
-    Entry **e = find(ht, key);
+    uint32_t h = (*ht->hash_func)(key, ht->key_size);
+    Entry **e = find(ht, h, key);
     if (*e == NULL) return false;
     if (old_key)   *old_key   = (*e)->key;
     if (old_value) *old_value = (*e)->value;
     return true;
 }
 
-
 /* Retrieve a value by key, if it does not exist, or insert it otherwise.
    Returns the existing value, or NULL if none is found. */
 void *HT_get_or_set(HashTable *ht, void const *key, const void *value)
 {
-    Entry **e = find(ht, key);
+    uint32_t h = (*ht->hash_func)(key, ht->key_size);
+    Entry **e = find(ht, h, key);
     if (*e != NULL) return (*e)->value;
     *e = malloc(sizeof(Entry));
     assert(*e != NULL);
-    (*e)->key   = (void*)key;
-    (*e)->value = (void*)value;
+    (*e)->key_hash = h;
+    (*e)->key      = (void*)key;
+    (*e)->value    = (void*)value;
     ht->size += 1;
     return NULL;
 }
@@ -136,8 +152,12 @@ bool HT_remove(HashTable *ht,
                void **old_key,
                void **old_value)
 {
-    Entry *f, **e = find(ht, key);
+    uint32_t h = (*ht->hash_func)(key, ht->key_size);
+    Entry *f, **e = find(ht, h, key);
     if (*e == NULL) return false;
+
+    /* This function is actually untested! */
+    assert(0);
 
     f = *e;
     *e = f->next;
