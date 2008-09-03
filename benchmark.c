@@ -14,7 +14,7 @@ int main()
     FILE *fp;
 
     /* TODO: test with more boards */
-    board_decode_short(&b, "0V0V0V0V0VVVVVVVVVVV");
+    board_decode_short(&b, "0V0V0V0VVVVVVVVVVVVV");
     board_print(&b, stdout);
     analysis_initialize();
     analysis_identify_groups(&b, &gi);
@@ -28,7 +28,7 @@ int main()
         fclose(fp);
         printf("memo dumped to memo55.dat\n");
     }
-    assert(gi.nval[0] == 8);
+    assert(gi.nval[0] == 9);
     printf("hash table size: %d\n", (int)HT_size(new_cache));
     return 0;
 }
