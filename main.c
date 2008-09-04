@@ -60,19 +60,38 @@ static void shuffle_moves_and_values(Rect *moves, int *values, int num_moves)
     }
 }
 
+
+/* Determine a tiebreaker value for the given move. (Higher is better)
+   Current tie-breaker: size of largest group left after making the move
+   (motivation: this makes it hard for the opponent to compute the exact result
+    and is more likely to cause him to make a wrong move) */
+int tiebreaker(Board *brd, Rect *move)
+{
+    Board tmp;
+    GroupInfo gi;
+    int n, max_size;
+
+    memcpy(&tmp, brd, sizeof(Board));
+    board_fill(&tmp, move, -1);
+    analysis_identify_groups(&tmp, &gi);
+
+    max_size = 0;
+    for (n = 0; n < gi.num_groups; ++n)
+    {
+        if (gi.size[n] > max_size) max_size = gi.size[n];
+    }
+    return max_size;
+}
+
 void select_move(Board *brd, Rect *move, bool *use_joker)
 {
     Rect moves[MAX_MOVES];
     int values[MAX_MOVES];
-    int num_moves, n, cnt[5], best_val;
+    int num_moves, n, cnt[5], best_val, tb, best_tb;
     char buf[26];
 
     board_encode_short(brd, buf);
     info("Analyzing board: %s", buf);
-    /*
-    info("Analyzing board:");
-    board_print(brd, stderr);
-    */
     num_moves = analysis_value_moves(brd, moves, values);
     info("%d moves found.", num_moves);
     if (num_moves == 0)
@@ -89,21 +108,26 @@ void select_move(Board *brd, Rect *move, bool *use_joker)
         ++cnt[values[n] + 2];
     }
     assert(cnt[2] == 0);
-    info("-2/-1/+1/+2: %d/%d/%d/%d (best value: %d)",
-         cnt[0], cnt[1], cnt[3], cnt[4], best_val);
 
     *use_joker = (best_val == +2);
 
     shuffle_moves_and_values(moves, values, num_moves);
+    best_tb = -1;
     for (n = 0; n < num_moves; ++n)
     {
         if (values[n] == best_val)
         {
-            *move = moves[n];
-            return;
+            tb = tiebreaker(brd, &moves[n]);
+            if (tb > best_tb)
+            {
+                *move = moves[n];
+                best_tb = tb;
+            }
         }
     }
-    fatal("shouldn't get here");
+
+    info("-2/-1/+1/+2: %d/%d/%d/%d (best value: %d; tiebreaker: %d)",
+        cnt[0], cnt[1], cnt[3], cnt[4], best_val, best_tb);
 }
 
 int main()

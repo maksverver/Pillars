@@ -524,6 +524,8 @@ static NV nvalue(Board *brd, GroupInfo *gi, int g)
     Group gr;
     int r, c;
 
+    if (gi->size[g] > ANALYSIS_MAX_SIZE) return -1;
+
     gr.height = gi->bounds[g].q.r - gi->bounds[g].p.r;
     gr.width  = gi->bounds[g].q.c - gi->bounds[g].p.c;
     for (r = 0; r < gr.height; ++r)
