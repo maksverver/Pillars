@@ -653,7 +653,7 @@ int analysis_value_moves(Board *brd_in, Rect *moves, int *values)
 
         for (group = 0; group < gi.num_groups; ++group)
         {
-            if (gi.size[group] == 1) ++num_ones;
+            if (gi.size[group] <= 1) ++num_ones;
             if (gi.nval[group] < 0)
             {
                 nsum ^= gi.size[group];
@@ -667,7 +667,7 @@ int analysis_value_moves(Board *brd_in, Rect *moves, int *values)
 
         if (num_ones == gi.num_groups)
         {
-            /* Only groups with nim value 1 left */
+            /* Only groups with nim value <= 1 left */
             values[move] = (nsum == 0) ? -1 : +1;
         }
         else
