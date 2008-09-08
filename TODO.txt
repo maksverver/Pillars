@@ -1,0 +1,5 @@
+- Make more efficient use of time (and avoid time-outs)
+- Benchmark performance to find hot-spots to optimize
+
+- Search smart until a specific number of fields is left, then bruteforce?
+- Instead of always flood filling, detect need by scanning around removed rectangle
