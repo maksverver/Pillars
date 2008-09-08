@@ -121,7 +121,7 @@ uint64_t hash_data[4][100] = {
         0x8c8600bbu, 0xcf4e6a58u, 0xb247ce6au, 0x4228be94u
     } };
 
-#define HASH_TABLE_SIZE (1000001)
+#define HASH_TABLE_SIZE (2000019)
 
 typedef struct GroupId
 {
@@ -138,6 +138,106 @@ typedef struct GroupCacheEntry
 } GroupCacheEntry;
 
 GroupCacheEntry *group_cache[HASH_TABLE_SIZE];
+
+
+
+static int nvalue_bruteforce_work(Mask *moves, int *skip, int grp_size)
+{
+    static NV memo[1<<ANALYSIS_MAX_SIZE];
+
+    int n, nval;
+    Mask mask, move;
+    uint32_t nvals;
+
+    mask = ((Mask)1<<grp_size);
+    do {
+        --mask;
+
+        nvals = 0;
+        n = 0;
+        while ((move = moves[n]) != 0)
+        {
+            if (mask&move)
+            {
+                n += skip[n];
+            }
+            else
+            {
+                nvals |= (1<<memo[mask|move]);
+                n += 1;
+            }
+        }
+
+        nval = 0;
+        while ((nvals & (1 << nval)) != 0) ++nval;
+        memo[mask] = nval;
+    } while (mask > 0);
+
+    return memo[0];
+}
+
+/* Alternative, brute-force implementation of nim-value analysis, which
+   does not utilize the global cache. */
+static NV group_nvalue_bruteforce(Group *gr, int grp_size)
+{
+    static Mask moves[MAX_MOVES+1];
+    static int skip[MAX_MOVES+1];
+
+    Mask mask, *move;
+    int num_moves;
+    Rect rect;
+
+    /* Figure out all valid moves */
+    num_moves = 0;
+    for (rect.p.r = 0; rect.p.r < gr->height; ++rect.p.r)
+    {
+        for (rect.p.c = 0; rect.p.c < gr->width; ++rect.p.c)
+        {
+            if (!gr->board[rect.p.r][rect.p.c]) continue;
+
+            for (rect.q.r = rect.p.r + 1; rect.q.r <= gr->height; ++rect.q.r)
+            {
+                for (rect.q.c = rect.p.c + 1; rect.q.c <= gr->width; ++rect.q.c)
+                {
+                    int r, c;
+
+                    for (r = rect.p.r; r < rect.q.r; ++r)
+                    {
+                        for (c = rect.p.c; c < rect.q.c; ++ c)
+                        {
+                            if (!gr->board[r][c]) goto invalid;
+                        }
+                    }
+
+                    mask = 0;
+                    for (r = 0; r < gr->height; ++r)
+                    {
+                        for (c = 0; c < gr->width; ++ c)
+                        {
+                            if (!gr->board[r][c]) continue;
+                            mask = 2*mask + ( r >= rect.p.r && r < rect.q.r &&
+                                              c >= rect.p.c && c < rect.q.c );
+                        }
+                    }
+                    moves[num_moves++] = mask;
+                invalid: continue;
+                }
+            }
+        }
+    }
+    moves[num_moves] = 0;   /* mark end of moves */
+
+    /* Calculate move skip data */
+    for (move = moves; *move != 0; ++move)
+    {
+        skip[move - moves] = 1;
+        while ((move[skip[move - moves]]&*move) == *move) ++skip[move - moves];
+    }
+
+    /* Calculate nim value (this takes the most time) */
+    return nvalue_bruteforce_work(moves, skip, grp_size);
+}
+
 
 void debug_cache_info()
 {
@@ -278,8 +378,11 @@ static void group_print(Group *gr)
 
 /* Isolates a connected subgroup of the given group (which is not in standard
    form; i.e. it may contain multiple connected components). The subgroup is
-   moved form src to dst (so both arguments are modified!) */
-static void group_isolate(Group *src, int r, int c, Group *dst)
+   moved form src to dst (so both arguments are modified!)
+
+   Returns the size of the group found.
+*/
+static int group_isolate(Group *src, int r, int c, Group *dst)
 {
     int q[100][2], qlen, qpos;     /* flood-fill queue */
     Rect b;                        /* bounding rectangle */
@@ -342,6 +445,8 @@ static void group_isolate(Group *src, int r, int c, Group *dst)
     assert(sizeof(dst->board[0]) == 10);
     memmove(&dst->board[0][0], &dst->board[b.p.r][b.p.c],
         sizeof(dst->board[0])*(b.q.r - b.p.r) + (b.q.c - b.p.c + 1));
+
+    return qlen;
 }
 
 static void group_hash(Group *gr, GroupId *id)
@@ -462,7 +567,7 @@ static NV group_nvalue(Group *gr)
                 for (m.q.c = m.p.c; m.q.c < gr->width; ++m.q.c)
                 {
                     Group ngr, nngr;
-                    int r, c;
+                    int r, c, grp_size;
                     NV nnval;       /* nim-value of new groups */
 
                     /* Check if rectangle is covered completely by fields */
@@ -492,8 +597,11 @@ static NV group_nvalue(Group *gr)
                         {
                             if (ngr.board[r][c] != 0)
                             {
-                                group_isolate(&ngr, r, c, &nngr);
-                                nnval ^= group_nvalue(&nngr);
+                                grp_size = group_isolate(&ngr, r, c, &nngr);
+                                nnval ^= grp_size == 1 ? 1 :
+                                    grp_size < 10 ?
+                                    group_nvalue_bruteforce(&nngr, grp_size) :
+                                    group_nvalue(&nngr);
                             }
                         }
                     }

@@ -75,6 +75,7 @@ int main(int argc, char *argv[])
             gi.bounds[n].q.c - gi.bounds[n].p.c,
             gi.first[n].r, gi.first[n].c, gi.size[n] );
 
+        /*
         {
             FILE *fp;
             int m;
@@ -86,6 +87,7 @@ int main(int argc, char *argv[])
             assert(fp != NULL);
             fclose(fp);
         }
+        */
     }
 
     if (nsum < 0)
