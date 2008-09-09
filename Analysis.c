@@ -13,6 +13,7 @@ typedef struct Group
 {
     int height, width;
     Board board;
+    int pop;
 } Group;
 
 uint64_t hash_data[4][100] = {
@@ -139,8 +140,7 @@ typedef struct GroupCacheEntry
 
 GroupCacheEntry *group_cache[HASH_TABLE_SIZE];
 
-
-
+__attribute__((noinline))
 static int nvalue_bruteforce_work(Mask *moves, int *skip, int grp_size)
 {
     static NV memo[1<<ANALYSIS_MAX_SIZE];
@@ -178,7 +178,8 @@ static int nvalue_bruteforce_work(Mask *moves, int *skip, int grp_size)
 
 /* Alternative, brute-force implementation of nim-value analysis, which
    does not utilize the global cache. */
-static NV group_nvalue_bruteforce(Group *gr, int grp_size)
+__attribute__((noinline))
+static NV group_nvalue_bruteforce(Group *gr)
 {
     static Mask moves[MAX_MOVES+1];
     static int skip[MAX_MOVES+1];
@@ -235,7 +236,7 @@ static NV group_nvalue_bruteforce(Group *gr, int grp_size)
     }
 
     /* Calculate nim value (this takes the most time) */
-    return nvalue_bruteforce_work(moves, skip, grp_size);
+    return nvalue_bruteforce_work(moves, skip, gr->pop);
 }
 
 
@@ -269,6 +270,7 @@ static void mirror_horizontal(Group *src, Group *dst)
         c2 = src->width;
         while (c2 > 0) dst->board[r][c1++] = src->board[r][--c2];
     }
+    dst->pop = src->pop;
 }
 
 static void mirror_vertical(Group *src, Group *dst)
@@ -286,6 +288,7 @@ static void mirror_vertical(Group *src, Group *dst)
         for (c = 0; c < src->width; ++c) dst->board[r1][c] = src->board[r2][c];
         ++r1;
     }
+    dst->pop = src->pop;
 }
 
 static void mirror_diagonal(Group *src, Group *dst)
@@ -302,6 +305,7 @@ static void mirror_diagonal(Group *src, Group *dst)
             dst->board[r][c] = src->board[c][r];
         }
     }
+    dst->pop = src->pop;
 }
 
 static int group_cmp(Group *gr1, Group *gr2)
@@ -379,10 +383,8 @@ static void group_print(Group *gr)
 /* Isolates a connected subgroup of the given group (which is not in standard
    form; i.e. it may contain multiple connected components). The subgroup is
    moved form src to dst (so both arguments are modified!)
-
-   Returns the size of the group found.
 */
-static int group_isolate(Group *src, int r, int c, Group *dst)
+static void group_isolate(Group *src, int r, int c, Group *dst)
 {
     int q[100][2], qlen, qpos;     /* flood-fill queue */
     Rect b;                        /* bounding rectangle */
@@ -445,8 +447,7 @@ static int group_isolate(Group *src, int r, int c, Group *dst)
     assert(sizeof(dst->board[0]) == 10);
     memmove(&dst->board[0][0], &dst->board[b.p.r][b.p.c],
         sizeof(dst->board[0])*(b.q.r - b.p.r) + (b.q.c - b.p.c + 1));
-
-    return qlen;
+    dst->pop = qlen;
 }
 
 static void group_hash(Group *gr, GroupId *id)
@@ -538,20 +539,15 @@ static void group_cache_store_alternatives(Group *gr, NV nval)
     insert_new_nval(&a, nval);
 }
 
-/* Determine the nim value for a group.
-   NB: modifies the argument to normalize it! */
-static NV group_nvalue(Group *gr)
+
+static NV group_nvalue(Group *gr);
+
+__attribute__((noinline))
+static NV group_nvalue_smart(Group *gr)
 {
-    GroupCacheEntry **gce;      /* group cache entry */
-    GroupId id;                 /* identification of the group */
     unsigned nvals;             /* nim-values of reachable states */
     NV nval;                    /* group nim-value (result) */
     Rect m;                     /* move */
-
-    /* Look up in cache */
-    group_hash(gr, &id);
-    gce = group_cache_lookup(&id);
-    if (*gce != NULL) return (*gce)->nvalue;
 
     /* Consider all possible moves */
     nvals = 0;
@@ -567,7 +563,7 @@ static NV group_nvalue(Group *gr)
                 for (m.q.c = m.p.c; m.q.c < gr->width; ++m.q.c)
                 {
                     Group ngr, nngr;
-                    int r, c, grp_size;
+                    int r, c;
                     NV nnval;       /* nim-value of new groups */
 
                     /* Check if rectangle is covered completely by fields */
@@ -597,11 +593,8 @@ static NV group_nvalue(Group *gr)
                         {
                             if (ngr.board[r][c] != 0)
                             {
-                                grp_size = group_isolate(&ngr, r, c, &nngr);
-                                nnval ^= grp_size == 1 ? 1 :
-                                    grp_size < 10 ?
-                                    group_nvalue_bruteforce(&nngr, grp_size) :
-                                    group_nvalue(&nngr);
+                                group_isolate(&ngr, r, c, &nngr);
+                                nnval ^= nngr.pop == 1 ? 1 : group_nvalue(&nngr);
                             }
                         }
                     }
@@ -618,6 +611,30 @@ static NV group_nvalue(Group *gr)
     /* Compute nvalue */
     nval = 0;
     while (nvals & (1u << nval)) ++nval;
+
+    return nval;
+}
+
+/* Determine the nim value for a group. */
+static NV group_nvalue(Group *gr)
+{
+    GroupCacheEntry **gce;      /* group cache entry */
+    GroupId id;                 /* identification of the group */
+    NV nval;
+
+    /* Look up in cache */
+    group_hash(gr, &id);
+    gce = group_cache_lookup(&id);
+    if (*gce != NULL) return (*gce)->nvalue;
+
+    /* Calculate nim value */
+    /*
+    FIXME: this only makes sense if we can cache partial values
+    (and even then, what's the point?)
+    nval = gr->pop < 25 ? group_nvalue_bruteforce(gr) : group_nvalue_smart(gr);
+    */
+    nval = group_nvalue_smart(gr);
+
 
     /* Store in cache */
     group_cache_store(gce, &id, nval);
@@ -636,11 +653,13 @@ static NV nvalue(Board *brd, GroupInfo *gi, int g)
 
     gr.height = gi->bounds[g].q.r - gi->bounds[g].p.r;
     gr.width  = gi->bounds[g].q.c - gi->bounds[g].p.c;
+    gr.pop    = 0;
     for (r = 0; r < gr.height; ++r)
     {
         for (c = 0; c < gr.width; ++c)
         {
             gr.board[r][c] = (*brd)[r + gi->bounds[g].p.r][c + gi->bounds[g].p.c] == g + 1;
+            gr.pop += gr.board[r][c];
         }
     }
 

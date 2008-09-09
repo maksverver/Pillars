@@ -8,18 +8,49 @@
    returned. */
 static bool is_losing(GroupInfo *gi)
 {
-    int n, num_ones, nsum;
+    int n, large_groups, nsum;
 
-    num_ones = 0;
+    large_groups = 0;
     nsum = 0;
     for (n = 0; n < gi->num_groups; ++n)
     {
-        if (gi->size[n] == 1) ++num_ones;
+        if (gi->nval[n] > 1) ++large_groups;
         if (gi->nval[n] < 0) return false;   /* value unknown! */
         nsum ^= gi->nval[n];
     }
 
-    return gi->num_groups == num_ones ? nsum != 0 : nsum == 0;
+    return large_groups ? nsum != 0 : nsum == 0;
+}
+
+void print_board(Board *b, int turn)
+{
+    int r, c;
+    printf("<table>\n");
+    for (r = 0; r < 10; ++r)
+    {
+        printf("<tr>\n");
+        for (c = 0; c < 10; ++c)
+        {
+            if ((*b)[r][c] < 0)
+            {
+                printf("<td class='pillar'></td>\n");
+            }
+            else
+            if ((*b)[r][c] < turn)
+            {
+                printf("<td class='%s'>%d</td>\n",
+                    (*b)[r][c]%2 ? "blue" : "red",
+                    (*b)[r][c] );
+            }
+            else
+            {
+
+                printf("<td></td>\n");
+            }
+        }
+        printf("</tr>\n");
+    }
+    printf("</table>\n");
 }
 
 int main(int argc, char *argv[])
@@ -43,9 +74,14 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    printf("Board given:\n");
-    board_print(&b, stdout);
+    printf("<html><head><title>Pillars Game Analysis</title></head>\n");
+    printf("<style type=\"text/css\" src=\"analysis.css\" />\n");
+    printf("</head><body>\n");
 
+    print_board(&b, 10);
+
+    printf("</body></html>");;
+#if 0
     board_encode_full(&b, buf);
     printf("Full board decription:\n%.50s\n%.50s\n%.50s\n%.50s\n",
            buf, buf + 50, buf + 100, buf + 150 );
@@ -139,8 +175,7 @@ int main(int argc, char *argv[])
                                 char buf[64];
                                 rect_encode(&m, buf);
                                 board_encode_short(&b, buf + 5);
-                                printf("Move to make nsum 0: %s (%s)\n",
-                                       buf, buf + 5);
+                                printf("Winning move: %s (%s)\n", buf, buf + 5);
                             }
                             board_fill(&b, &m, 0);
                         }
@@ -149,6 +184,7 @@ int main(int argc, char *argv[])
             }
         }
     }
+#endif
 
     return 0;
 }

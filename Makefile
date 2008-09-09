@@ -8,7 +8,7 @@ BENCHMARK_SRCS=benchmark.c Board.c Analysis.c
 PLAYER_SRCS=Analysis.c Board.c Debug.c main.c
 PLAYER_OBJS=Analysis.o Board.o Debug.o main.o
 
-EXECUTABLES=analyze arbiter player
+EXECUTABLES=analyze arbiter player benchmark
 
 all: $(EXECUTABLES) player.c
 
