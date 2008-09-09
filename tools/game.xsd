@@ -1,0 +1,137 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+<xs:element name="game" type="GameType"/>
+
+<xs:complexType name="GameType">
+    <xs:all>
+        <xs:element name="player1" type="PlayerType" minOccurs="0"/>
+        <xs:element name="player2" type="PlayerType" minOccurs="0"/>
+        <xs:element name="pillars" type="PillarsType"/>
+        <xs:element name="moves" type="MovesType"/>
+        <xs:element name="board" type="BoardType"/>
+        <xs:element name="result" type="ResultType"/>
+        <xs:element name="analysis" type="AnalysisType" minOccurs="0" />
+    </xs:all>
+</xs:complexType>
+
+<xs:complexType name="PlayerType">
+    <xs:all>
+        <xs:element name="name" type="xs:string"/>
+    </xs:all>
+</xs:complexType>
+
+<xs:complexType name="PillarsType">
+    <xs:sequence minOccurs="10" maxOccurs="10">
+        <xs:element name="point" type="PointType"/>
+    </xs:sequence>
+    <xs:attribute name="perm" type="PermType" />
+</xs:complexType>
+
+<xs:complexType name="MovesType">
+    <xs:sequence maxOccurs="90">
+        <xs:element name="rect" type="RectType"/>
+    </xs:sequence>
+    <xs:attribute name="count" type="MovesCountType" />
+</xs:complexType>
+
+<xs:simpleType name="PermType">
+    <xs:restriction base="xs:integer">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="3628800"/>
+    </xs:restriction>
+</xs:simpleType>
+
+<xs:simpleType name="MovesCountType">
+    <xs:restriction base="xs:integer">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="90"/>
+    </xs:restriction>
+</xs:simpleType>
+
+<xs:simpleType name="PointType">
+    <xs:restriction base="xs:string">
+        <xs:pattern value="[A-J][a-j]"/>
+    </xs:restriction>
+</xs:simpleType>
+
+<xs:simpleType name="RectType">
+    <xs:restriction base="xs:string">
+        <xs:pattern value="!?[A-J][a-j][A-J][a-j]"/>
+    </xs:restriction>
+</xs:simpleType>
+
+<xs:simpleType name="BoardType">
+    <xs:restriction base="xs:string">
+        <xs:pattern value="[0-9A-F]{200}"/>
+    </xs:restriction>
+</xs:simpleType>
+
+<xs:complexType name="ResultType">
+    <xs:simpleContent>
+        <xs:extension base="xs:string">
+            <xs:attribute name="winner" type="WinnerType" />
+            <xs:attribute name="score1" type="ScoreType" />
+            <xs:attribute name="score2" type="ScoreType" />
+        </xs:extension>
+    </xs:simpleContent>
+</xs:complexType>
+
+<xs:complexType name="AnalysisType">
+    <xs:sequence minOccurs="0" maxOccurs="91">
+        <xs:element name="state" type="AnalysisStateType" />
+    </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="AnalysisStateType">
+    <xs:sequence minOccurs="0" maxOccurs="50">
+        <xs:element name="group" type="AnalysisGroupType"/>
+    </xs:sequence>
+    <xs:attribute name="turn" type="TurnType"/>
+    <xs:attribute name="winner" type="WinnerType"/>
+    <xs:attribute name="nimsum" type="NimSumType"/>
+    <xs:attribute name="guessed" type="xs:boolean"/>
+</xs:complexType>
+
+<xs:complexType name="AnalysisGroupType">
+    <xs:all>
+        <xs:element name="points" type="GroupPointsType"/>
+    </xs:all>
+    <xs:attribute name="nimsum" type="NimSumType"/>
+    <xs:attribute name="guessed" type="xs:boolean"/>
+</xs:complexType>
+
+<xs:complexType name="GroupPointsType">
+    <xs:sequence minOccurs="1" maxOccurs="90">
+        <xs:element name="point" type="PointType"/>
+    </xs:sequence>
+</xs:complexType>
+
+<xs:simpleType name="WinnerType">
+    <xs:restriction base="xs:integer">
+        <xs:minInclusive value="1"/>
+        <xs:maxInclusive value="2"/>
+    </xs:restriction>
+</xs:simpleType>
+
+<xs:simpleType name="ScoreType">
+    <xs:restriction base="xs:integer">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="27"/>
+    </xs:restriction>
+</xs:simpleType>
+
+<xs:simpleType name="NimSumType">
+    <xs:restriction base="xs:integer">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="90"/>
+    </xs:restriction>
+</xs:simpleType>
+
+<xs:simpleType name="TurnType">
+    <xs:restriction base="xs:integer">
+        <xs:minInclusive value="0"/>
+        <xs:maxInclusive value="90"/>
+    </xs:restriction>
+</xs:simpleType>
+
+</xs:schema>
