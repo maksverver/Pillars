@@ -1,72 +1,113 @@
+#include "Board.h"
 #include "Analysis.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-/* Given a GroupInfo (complete with nim-values) determines if the current
-   position is known to be losing. If any nim-values are not known, false is
-   returned. */
-static bool is_losing(GroupInfo *gi)
+static void print_cdata(const char *msg)
 {
-    int n, large_groups, nsum;
-
-    large_groups = 0;
-    nsum = 0;
-    for (n = 0; n < gi->num_groups; ++n)
+    while (*msg)
     {
-        if (gi->nval[n] > 1) ++large_groups;
-        if (gi->nval[n] < 0) return false;   /* value unknown! */
-        nsum ^= gi->nval[n];
+        int i = *(unsigned char*)msg++;
+        if (i < 32 || i >= 127)
+        {
+            printf("&#%d;", i);
+        }
+        else
+        {
+            switch (i)
+            {
+            case '<':  printf("&lt;"); break;
+            case '>':  printf("&gt;"); break;
+            case '&':  printf("&amp;"); break;
+            case '"':  printf("&quot;"); break;
+            case '\'': printf("&apos;"); break;
+            default:   putchar(i);
+            }
+        }
     }
-
-    return large_groups ? nsum != 0 : nsum == 0;
 }
 
-void print_board(Board *b, int turn)
+static void print_pillars(Board *b)
 {
     int r, c;
-    printf("<table>\n");
+
+    /* TODO: determine permutation */
+
+    printf("<pillars>\n");
     for (r = 0; r < 10; ++r)
     {
-        printf("<tr>\n");
         for (c = 0; c < 10; ++c)
         {
             if ((*b)[r][c] < 0)
             {
-                printf("<td class='pillar'></td>\n");
-            }
-            else
-            if ((*b)[r][c] < turn)
-            {
-                printf("<td class='%s'>%d</td>\n",
-                    (*b)[r][c]%2 ? "blue" : "red",
-                    (*b)[r][c] );
-            }
-            else
-            {
-
-                printf("<td></td>\n");
+                (*b)[r][c] = -1;
+                printf("<point>%c%c</point>", "ABCDEFGHIJ"[r], "abcdefghij"[c]);
             }
         }
-        printf("</tr>\n");
     }
-    printf("</table>\n");
+    printf("</pillars>\n");
+}
+
+static void print_moves(Board *b)
+{
+    int num_moves, n, r, c;
+    Rect move;
+
+    num_moves = 0;
+    while (board_get_move(b, NULL, num_moves)) ++num_moves;
+    for (r = 0; r < 10; ++r)
+    {
+        for (c = 0; c < 10; ++c)
+        {
+            if ((*b)[r][c] > num_moves) (*b)[r][c] = 0;
+        }
+    }
+
+    printf("<moves count='%d'>\n", num_moves);
+    for (n = 0; n < num_moves; ++n)
+    {
+        board_get_move(b, &move, n);
+        printf("<rect>%c%c%c%c</rect>\n",
+            "ABCDEFGHIJ"[move.p.r], "abcdefghij"[move.p.c],
+            "ABCDEFGHIJ"[move.q.r], "abcdefghij"[move.q.c]);
+    }
+    printf("</moves>\n");
+}
+
+static void print_board(Board *b)
+{
+    char buf[201];
+
+    board_encode_full(b, buf);
+    printf("<board>%s</board>\n", buf);
+}
+
+static void print_message(Board *b)
+{
+    /* TODO: figure out if the game is finished
+             (and if so, winner/score1/score2) */
+    printf("<result>\n");
+    printf("</result>\n");
 }
 
 int main(int argc, char *argv[])
 {
     Board b;
-    GroupInfo gi;
-    int n, nsum, num_ones;
-    char buf[256];
+    const char *desc, *player1, *player2, *result;
 
     analysis_initialize();
 
-    if (argc != 2)
+    if (argc != 2 && argc != 4)
     {
-        fprintf(stderr, "Expected 1 argument: board definition.\n");
+        fprintf(stderr, "Usage: analyze <board> [<player1> <player2>]\n");
+        fprintf(stderr, "       analyze <game-file>\n");
         exit(1);
     }
+    desc    = argc > 1 ? argv[1] : NULL;
+    player1 = argc > 2 ? argv[2] : "Red";
+    player2 = argc > 3 ? argv[3] : "Blue";
+    result  = argc > 4 ? argv[4] : NULL;
 
     if (!board_decode_full(&b, argv[1]) && !board_decode_short(&b, argv[1]))
     {
@@ -74,117 +115,30 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    printf("<html><head><title>Pillars Game Analysis</title></head>\n");
-    printf("<style type=\"text/css\" src=\"analysis.css\" />\n");
-    printf("</head><body>\n");
+    printf("<?xml version='1.0' encoding='UTF-8'?>\n");
+    printf("<game>\n");
 
-    print_board(&b, 10);
-
-    printf("</body></html>");;
-#if 0
-    board_encode_full(&b, buf);
-    printf("Full board decription:\n%.50s\n%.50s\n%.50s\n%.50s\n",
-           buf, buf + 50, buf + 100, buf + 150 );
-    board_encode_short(&b, buf);
-    printf("Short board description: %s\n", buf);
-
-    printf("\nAnalysing groups...\n");
-    board_flatten(&b);
-    analysis_identify_groups(&b, &gi);
-    board_print(&b, stdout);
-    printf("%d groups identified\n", gi.num_groups);
-
-    analysis_nim_values(&b, &gi);
-    nsum = 0;
-    num_ones = 0;
-    for (n = 0; n < gi.num_groups; ++n)
+    if (player1 != NULL)
     {
-        num_ones += (gi.nval[n] == 1);
-        if (gi.nval[n] < 0) nsum = -1;
-        if (nsum != -1) nsum ^= gi.nval[n];
-
-        printf("%2d: nv=%2d (%2d,%2d)-(%2d,%2d) [%dx%d]  (%d,%d) %d fields\n",
-            n, gi.nval[n],
-            gi.bounds[n].p.r, gi.bounds[n].p.c,
-            gi.bounds[n].q.r, gi.bounds[n].q.c,
-            gi.bounds[n].q.r - gi.bounds[n].p.r,
-            gi.bounds[n].q.c - gi.bounds[n].p.c,
-            gi.first[n].r, gi.first[n].c, gi.size[n] );
-
-        /*
-        {
-            FILE *fp;
-            int m;
-            fp = fopen("test.dat","wb");
-            for (m = (1<<gi.size[n])-1; m >= 0; --m)
-            {
-                fputc(memo[n], fp);
-            }
-            assert(fp != NULL);
-            fclose(fp);
-        }
-        */
+        printf("<player1><name>");
+        print_cdata(player1);
+        printf("</name></player1>\n");
     }
 
-    if (nsum < 0)
+    if (player2 != NULL)
     {
-        printf("Game status unknown!\n");
-    }
-    else
-    if (num_ones == gi.num_groups)
-    {
-        printf( "Player %s (any move)\n",
-                (num_ones%2 == 0) ? "wins" : "loses" );
-    }
-    else
-    if (num_ones == gi.num_groups - 1)
-    {
-        printf("One group with nim value <> 1 left; player wins.\n");
-    }
-    else
-    if (nsum == 0)
-    {
-        printf("Nim sum 0; player loses (any move).\n");
-    }
-    else
-    {
-        printf("Nim sum %d; player wins.\n", nsum);
+        printf("<player2><name>");
+        print_cdata(argv[3]);
+        printf("</name></player2>\n");
     }
 
-    /* Search for winning moves */
-    {
-        Rect m;
-        board_clear(&b);
-        for (m.p.r = 0; m.p.r < 10; ++m.p.r)
-        {
-            for (m.p.c = 0; m.p.c < 10; ++m.p.c)
-            {
-                for (m.q.r = m.p.r + 1; m.q.r <= 10; ++m.q.r)
-                {
-                    for (m.q.c = m.p.c + 1; m.q.c <= 10; ++m.q.c)
-                    {
-                        if (board_is_valid_move(&b, &m))
-                        {
-                            GroupInfo gi2;
-                            board_fill(&b, &m, -1);
-                            analysis_identify_groups(&b, &gi2);
-                            analysis_nim_values(&b, &gi2);
-                            board_clear(&b);
-                            if (is_losing(&gi2))
-                            {
-                                char buf[64];
-                                rect_encode(&m, buf);
-                                board_encode_short(&b, buf + 5);
-                                printf("Winning move: %s (%s)\n", buf, buf + 5);
-                            }
-                            board_fill(&b, &m, 0);
-                        }
-                    }
-                }
-            }
-        }
-    }
-#endif
+    print_pillars(&b);
+    print_moves(&b);
+    print_board(&b);
+    print_result(&b);
+    print_analysis(&b);
+
+    printf("</game>\n");
 
     return 0;
 }
