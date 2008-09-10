@@ -1,6 +1,6 @@
-CFLAGS=-g -ansi -Wall -Wextra -O2 -m32
+CFLAGS=-g -ansi -Wall -Wextra -O2 -m32 -I/usr/include/libxml2
 LDFLAGS=-g -m32
-LDLIBS=-lm
+LDLIBS=-lm -lxml2
 ANALYZE_OBJS=Board.o Analysis.o analyze.o
 ARBITER_OBJS=arbiter.o Board.o 
 BENCHMARK_SRCS=benchmark.c Board.c Analysis.c

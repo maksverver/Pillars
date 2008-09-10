@@ -1,5 +1,11 @@
 - Make more efficient use of time (and avoid time-outs)
 - Benchmark performance to find hot-spots to optimize
 
-- Search smart until a specific number of fields is left, then bruteforce?
-- Instead of always flood filling, detect need by scanning around removed rectangle
+REFACTOR:
+- Allow joker moves to be included in board description,
+  and adjust *all* code that handles long board descriptions accordingly.
+
+Analysis:
+- Instead of always flood filling, detect need by scanning around removed
+  rectangle?
+- Abort move valuation after first winning move (+2) is found?

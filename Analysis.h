@@ -21,6 +21,10 @@ typedef struct GroupInfo
     int   size[MAX_GROUPS];     /* number of fields in the group */
     Rect  bounds[MAX_GROUPS];   /* minimal bounding rectangle of the group */
     NV    nval[MAX_GROUPS];     /* nim-value of group */
+
+    bool  complete;             /* true if all nim values of groups are known */
+    int   nsum;                 /* nim-value of board (guessed if incomplete) */
+    int   winning;              /* is board winning? (guessed if incomplete) */
 } GroupInfo;
 
 /* Initialize the analysis module */
@@ -31,7 +35,8 @@ void analysis_initialize();
    byte g+1. Does not fill in nim values. */
 void analysis_identify_groups(Board *brd, GroupInfo *gi);
 
-/* Assign nim-values to groups (if possible). */
+/* Assign nim-values to groups (if possible).
+   Initializes gi->nval, gi->complete, gi->board_nval and gi->board_winning. */
 void analysis_nim_values(Board *brd, GroupInfo *gi);
 
 /* Analyzes the board and the possible moves, and values each move,
@@ -46,5 +51,6 @@ void analysis_nim_values(Board *brd, GroupInfo *gi);
    is not modified.)
 */
 int analysis_value_moves(Board *brd, Rect *moves, int *values);
+
 
 #endif /* ndef ANALYSIS_H */

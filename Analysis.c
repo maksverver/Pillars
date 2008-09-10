@@ -743,14 +743,28 @@ void analysis_identify_groups(Board *brd, GroupInfo *gi)
 
 void analysis_nim_values(Board *brd, GroupInfo *gi)
 {
-    int n;
+    int n, num_large, num_guessed;
 
     assert(analyis_initialized);
 
+    num_large = num_guessed = 0;
+    gi->nsum = 0;
     for (n = 0; n < gi->num_groups; ++n)
     {
         gi->nval[n] = nvalue(brd, gi, n);
+        if (gi->nval[n] > 1) ++num_large;
+        if (gi->nval[n] < 0)
+        {
+            gi->nsum ^= gi->size[n];
+            ++num_guessed;
+        }
+        else
+        {
+            gi->nsum ^= gi->nval[n];
+        }
     }
+    gi->complete = num_guessed == 0;
+    gi->winning  = (num_large == 0) ^ (gi->nsum != 0);
 }
 
 int analysis_value_moves(Board *brd_in, Rect *moves, int *values)
@@ -764,45 +778,13 @@ int analysis_value_moves(Board *brd_in, Rect *moves, int *values)
     num_moves = board_list_moves(brd_in, moves);
     for (move = 0; move < num_moves; ++move)
     {
-        int group, num_ones, nsum, guessed;
-
         /* Construct the board after executing the i-th move */
         memcpy(brd, brd_in, sizeof(brd));
         board_flatten(&brd);
         board_fill(&brd, &moves[move], -1);
         analysis_identify_groups(&brd, &gi);
         analysis_nim_values(&brd, &gi);
-
-        /* Determine status of the board by computing its nim-sum */
-        num_ones = 0;
-        nsum     = 0;
-        guessed  = 0;
-
-        for (group = 0; group < gi.num_groups; ++group)
-        {
-            if (gi.size[group] <= 1) ++num_ones;
-            if (gi.nval[group] < 0)
-            {
-                nsum ^= gi.size[group];
-                ++guessed;
-            }
-            else
-            {
-                nsum ^= gi.nval[group];
-            }
-        }
-
-        if (num_ones == gi.num_groups)
-        {
-            /* Only groups with nim value <= 1 left */
-            values[move] = (nsum == 0) ? -1 : +1;
-        }
-        else
-        {
-            values[move] = (nsum == 0) ? +1 : -1;
-        }
-
-        if (!guessed) values[move] *= 2;
+        values[move] = (gi.complete ? 2 : 1) * (gi.winning ? -1 : +1);
     }
 
     return num_moves;
