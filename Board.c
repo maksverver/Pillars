@@ -332,6 +332,7 @@ bool board_get_move(Board *brd, Rect *move, int n)
 
     if (cnt == 0 || cnt != (m.q.r - m.p.r)*(m.q.c - m.p.c)) return false;
 
-    *move = m;
+    if (move != NULL) *move = m;
+
     return true;
 }

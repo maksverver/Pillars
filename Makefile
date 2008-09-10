@@ -8,7 +8,7 @@ BENCHMARK_SRCS=benchmark.c Board.c Analysis.c
 PLAYER_SRCS=Analysis.c Board.c Debug.c main.c
 PLAYER_OBJS=Analysis.o Board.o Debug.o main.o
 
-EXECUTABLES=analyze arbiter player benchmark
+EXECUTABLES=analyze arbiter player benchmark board-to-xml
 
 all: $(EXECUTABLES) player.c
 
@@ -24,6 +24,9 @@ runguard: runguard.c
 
 benchmark:
 	$(CC) $(LDFLAGS) $(CFLAGS) -DANALYSIS_MAX_SIZE=25 -o benchmark $(BENCHMARK_SRCS) $(LDLIBS)
+
+board-to-xml: Board.o tools/board-to-xml.c
+	$(CC) $(LDFLAGS) $(CFLAGS) -I. -o $@ $^
 
 player.c: $(PLAYER_SRCS) Analysis.h Board.h
 	./compile.pl $(PLAYER_SRCS) > player.c
