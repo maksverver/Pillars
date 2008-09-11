@@ -789,3 +789,79 @@ int analysis_value_moves(Board *brd_in, Rect *moves, int *values)
 
     return num_moves;
 }
+
+int analysis_value_moves_minimax(Board *brd, Rect *moves, int *values)
+{
+    static Mask mm[MAX_MOVES+1];
+    static bool won[1<<ANALYSIS_MAX_SIZE];
+
+    Board labels;
+    Mask *m;
+    int n, num_moves, num_spaces;
+    int r, c;
+
+    assert(analyis_initialized);
+
+    /* Determine available moves */
+    num_moves = board_list_moves(brd, moves);
+
+    /* Determine number of spaces */
+    num_spaces = 0;
+    for (r = 0; r < 10; ++r)
+    {
+        for (c = 0; c < 10; ++c)
+        {
+            labels[r][c] = (*brd)[r][c] ? -1 : num_spaces++;
+        }
+    }
+
+    /* Check wether search is feasible */
+    if (num_spaces > ANALYSIS_MAX_SIZE)
+    {
+        for (n = 0; n < num_moves; ++n) values[n] = 0;
+        return num_moves;
+    }
+
+    /* Build move masks */
+    for (n = 0; n < num_moves; ++n)
+    {
+        mm[n] = 0;
+        for (r = 0; r < 10; ++r)
+        {
+            for (c = 0; c < 10; ++c)
+            {
+                if (r >= moves[n].p.r && r < moves[n].q.r &&
+                    c >= moves[n].p.c && c < moves[n].q.c )
+                {
+                    assert(labels[r][c] != -1);
+                    mm[n] |= (1<<labels[r][c]);
+                }
+            }
+        }
+    }
+    mm[num_moves] = 0;
+
+    /* Determine state of all subpositions */
+    won[0] = true;
+    for (n = 1; n < (1<<num_spaces); ++n)
+    {
+        won[n] = false;
+        for (m = mm; *m != 0; ++m)
+        {
+            if ((n&*m) != *m) continue;
+            if (!won[n^*m])
+            {
+                won[n] = true;
+                break;
+            }
+        }
+    }
+
+    /* Assign move values */
+    for (n = 0; n < num_moves; ++n)
+    {
+        values[n] = won[((1<<num_spaces)-1)^mm[n]] ? -2 : +2;
+    }
+
+    return num_moves;
+}

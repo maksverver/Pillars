@@ -3,7 +3,6 @@
 #include "Analysis.h"
 #include <string.h>
 #include <stdlib.h>
-
 #define TIME_LIMIT 5
 
 /* For seeding the RNG: */
@@ -92,7 +91,7 @@ void select_move(Board *brd, Rect *move, bool *use_joker)
 
     board_encode_short(brd, buf);
     info("Analyzing board: %s", buf);
-    num_moves = analysis_value_moves(brd, moves, values);
+    num_moves = analysis_value_moves_minimax(brd, moves, values);
     info("%d moves found.", num_moves);
     if (num_moves == 0)
     {
@@ -107,7 +106,6 @@ void select_move(Board *brd, Rect *move, bool *use_joker)
         assert(values[n] >= -2 && values[n] <= +2);
         ++cnt[values[n] + 2];
     }
-    assert(cnt[2] == 0);
 
     *use_joker = (best_val == +2);
 

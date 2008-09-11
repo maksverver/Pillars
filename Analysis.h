@@ -52,5 +52,13 @@ void analysis_nim_values(Board *brd, GroupInfo *gi);
 */
 int analysis_value_moves(Board *brd, Rect *moves, int *values);
 
+/* Alternative move valuation using minimax search.
+
+   Each value is set to one of:
+    +2: known to be winning (N-position)
+     0: status unknown
+    -2: known to be losing (P-position)
+*/
+int analysis_value_moves_minimax(Board *brd, Rect *moves, int *values);
 
 #endif /* ndef ANALYSIS_H */
