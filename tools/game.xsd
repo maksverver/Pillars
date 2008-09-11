@@ -10,6 +10,7 @@
         <xs:element name="moves" type="MovesType"/>
         <xs:element name="board" type="BoardType"/>
         <xs:element name="result" type="ResultType"/>
+        <xs:element name="failure" type="FailureType"/>
         <xs:element name="analysis" type="AnalysisType" minOccurs="0" />
     </xs:all>
 </xs:complexType>
@@ -69,11 +70,18 @@
 <xs:complexType name="ResultType">
     <xs:simpleContent>
         <xs:extension base="xs:string">
-            <xs:attribute name="winner" type="WinnerType" />
+            <xs:attribute name="winner" type="PlayerNumberType" />
             <xs:attribute name="score1" type="ScoreType" />
             <xs:attribute name="score2" type="ScoreType" />
         </xs:extension>
     </xs:simpleContent>
+</xs:complexType>
+
+<xs:complexType name="FailureType">
+    <xs:all>
+        <xs:element name="error" type="xs:string" minOccurs="0"/>
+    </xs:all>
+    <xs:attribute name="player" type="PlayerNumberType"/>
 </xs:complexType>
 
 <xs:complexType name="AnalysisType">
@@ -87,7 +95,7 @@
         <xs:element name="group" type="AnalysisGroupType"/>
     </xs:sequence>
     <xs:attribute name="turn" type="TurnType"/>
-    <xs:attribute name="winner" type="WinnerType"/>
+    <xs:attribute name="winner" type="PlayerNumberType"/>
     <xs:attribute name="nimsum" type="NimSumType"/>
     <xs:attribute name="guessed" type="xs:boolean"/>
 </xs:complexType>
@@ -106,7 +114,7 @@
     </xs:sequence>
 </xs:complexType>
 
-<xs:simpleType name="WinnerType">
+<xs:simpleType name="PlayerNumberType">
     <xs:restriction base="xs:integer">
         <xs:minInclusive value="1"/>
         <xs:maxInclusive value="2"/>
