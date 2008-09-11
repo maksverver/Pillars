@@ -313,6 +313,10 @@ int main(int argc, char *argv[])
             break;
         }
     }
+    fprintf(fpout[0], "Quit\n");
+    fprintf(fpout[1], "Quit\n");
+    fflush(fpout[0]);
+    fflush(fpout[1]);
     print_status();
 
     return 0;
