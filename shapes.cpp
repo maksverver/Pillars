@@ -248,9 +248,13 @@ int main()
         printf(") >> out;\n");
     }
 
-    printf("G := g0");
-    for (int n = 1; n <= (int)groups.size(); ++n) printf(" + g%d", n);
-    printf(" >> out;\n");
+    printf("G := Misere(");
+    for (int n = 1; n <= (int)groups.size(); ++n)
+    {
+        if (n > 1) printf(", ");
+        printf("g%d", n);
+    }
+    printf(");\n");
     /* printf("Total: %d\n", (int)groups.size()); */
 
 }
