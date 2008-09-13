@@ -1,14 +1,14 @@
 CFLAGS=-g -ansi -Wall -Wextra -O2 -m32 -I/usr/include/libxml2
 LDFLAGS=-g -m32
 LDLIBS=-lm -lxml2
-ANALYZE_OBJS=Board.o Analysis.o analyze.o
+ANALYZE_OBJS=Board.o Analysis.o Group.o analyze.o
 ARBITER_OBJS=arbiter.o Board.o 
-BENCHMARK_SRCS=benchmark.c Board.c Analysis.c
+BENCHMARK_SRCS=benchmark.c Board.c Analysis.c Group.c
 
-PLAYER_SRCS=Analysis.c Board.c Debug.c main.c
-PLAYER_OBJS=Analysis.o Board.o Debug.o main.o
+PLAYER_SRCS=Analysis.c Group.c Board.c Debug.c main.c
+PLAYER_OBJS=Analysis.o Group.o Board.o Debug.o main.o
 
-EXECUTABLES=analyze arbiter player benchmark board-to-xml
+EXECUTABLES=analyze arbiter player board-to-xml shapes
 
 all: $(EXECUTABLES) player.c
 
@@ -37,10 +37,13 @@ player.c: $(PLAYER_SRCS) Analysis.h Board.h
 player: $(PLAYER_OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o player $(PLAYER_OBJS) $(LDLIBS)
 
+shapes: Board.o Analysis.o Group.o shapes.cpp
+	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ $^
+
 clean:
 	rm -f *.o
 	
 distclean: clean
 	rm -f $(EXECUTABLES) player.c
 
-.PHONY: all clean distclean benchmark
+.PHONY: all clean distclean

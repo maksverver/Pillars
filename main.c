@@ -35,6 +35,8 @@ static const char *next_line()
         --len;
     }
 
+    if (strcmp(buf, "Quit") == 0) return NULL;
+
     return buf;
 }
 

@@ -2,17 +2,7 @@
 #define ANALYSIS_H
 
 #include "Board.h"
-#include <stdint.h>
-
-#define MAX_GROUPS            50    /* max. number of groups on a board */
-
-#ifndef ANALYSIS_MAX_SIZE
-#define ANALYSIS_MAX_SIZE     18    /* max. size of group for in-depth analysis */
-#endif
-
-typedef signed char NV;             /* a nim-value */
-typedef uint32_t Mask;              /* bitmask for analysis */
-typedef uint32_t NVSet;             /* set of nim-values */
+#include "Group.h"
 
 typedef struct GroupInfo
 {
@@ -51,6 +41,5 @@ void analysis_nim_values(Board *brd, GroupInfo *gi);
    is not modified.)
 */
 int analysis_value_moves(Board *brd, Rect *moves, int *values);
-
 
 #endif /* ndef ANALYSIS_H */
