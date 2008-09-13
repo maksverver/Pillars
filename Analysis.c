@@ -790,20 +790,58 @@ int analysis_value_moves(Board *brd_in, Rect *moves, int *values)
     return num_moves;
 }
 
-int analysis_value_moves_minimax(Board *brd, Rect *moves, int *values)
+/* Determines wether the space at (r,c) is a singleton space; i.e.
+   it's completely surrounded by blocked squares or the edge of the board. */
+static bool singleton(Board *brd, int r, int c)
+{
+    assert((*brd)[r][c] == 0);
+    return (r == 0 || (*brd)[r - 1][c] != 0) &&
+           (c == 0 || (*brd)[r][c - 1] != 0) &&
+           (r == 9 || (*brd)[r + 1][c] != 0) &&
+           (c == 9 || (*brd)[r][c + 1] != 0);
+}
+
+void remove_singleton_pairs(Board *brd)
+{
+    int r, c, last_r = -1, last_c = -1;
+
+    for (r = 0; r < 10; ++r)
+    {
+        for (c = 0; c < 10; ++c)
+        {
+            if ((*brd)[r][c] == 0 && singleton(brd, r, c))
+            {
+                if (last_r >= 0 && last_c >= 0)
+                {
+                    (*brd)[r][c] = -2;
+                    (*brd)[last_r][last_c] = -2;
+                    last_r = last_c = -1;
+                }
+                else
+                {
+                    last_r = r;
+                    last_c = c;
+                }
+            }
+        }
+    }
+}
+
+int analysis_value_moves_minimax(Board *brd_in, Rect *moves, int *values)
 {
     static Mask mm[MAX_MOVES+1];
     static bool won[1<<ANALYSIS_MAX_SIZE];
 
-    Board labels;
+    Board brd, labels;
     Mask *m;
     int n, num_moves, num_spaces;
     int r, c;
 
     assert(analyis_initialized);
 
-    /* Determine available moves */
-    num_moves = board_list_moves(brd, moves);
+    /* Build board, canceling out singletons */
+    memcpy(&brd, brd_in, sizeof(brd));
+    remove_singleton_pairs(&brd);
 
     /* Determine number of spaces */
     num_spaces = 0;
@@ -811,8 +849,19 @@ int analysis_value_moves_minimax(Board *brd, Rect *moves, int *values)
     {
         for (c = 0; c < 10; ++c)
         {
-            labels[r][c] = (*brd)[r][c] ? -1 : num_spaces++;
+            labels[r][c] = brd[r][c] ? -1 : num_spaces++;
         }
+    }
+
+    /* Determine available moves */
+    num_moves = board_list_moves(&brd, moves);
+
+    if (num_moves == 0)
+    {
+        /* Only even number of singletons left -- any move is winning! */
+        num_moves = board_list_moves(brd_in, moves);
+        for (n = 0; n < num_moves; ++n) values[n] = +1;
+        return num_moves;
     }
 
     /* Check wether search is feasible */

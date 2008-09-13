@@ -7,7 +7,7 @@
 #define MAX_GROUPS            50    /* max. number of groups on a board */
 
 #ifndef ANALYSIS_MAX_SIZE
-#define ANALYSIS_MAX_SIZE     18    /* max. size of group for in-depth analysis */
+#define ANALYSIS_MAX_SIZE     20    /* max. size of group for in-depth analysis */
 #endif
 
 typedef signed char NV;             /* a nim-value */
