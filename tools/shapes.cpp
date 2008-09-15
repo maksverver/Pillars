@@ -1,7 +1,7 @@
 extern "C"
 {
-#include "Board.h"
-#include "Analysis.h"
+#include <Board.h>
+#include <Analysis.h>
 }
 
 #include <assert.h>
