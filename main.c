@@ -3,7 +3,6 @@
 #include "Analysis.h"
 #include <string.h>
 #include <stdlib.h>
-
 #define TIME_LIMIT 5
 
 /* For seeding the RNG: */
@@ -64,25 +63,18 @@ static void shuffle_moves_and_values(Rect *moves, int *values, int num_moves)
 
 
 /* Determine a tiebreaker value for the given move. (Higher is better)
-   Current tie-breaker: size of largest group left after making the move
-   (motivation: this makes it hard for the opponent to compute the exact result
-    and is more likely to cause him to make a wrong move) */
+   Current tie-breaker: number of groups left (stimulates leaving small
+   groups intact, which may increate the chance to win at misere play).
+*/
 int tiebreaker(Board *brd, Rect *move)
 {
     Board tmp;
     GroupInfo gi;
-    int n, max_size;
 
     memcpy(&tmp, brd, sizeof(Board));
     board_fill(&tmp, move, -1);
     analysis_identify_groups(&tmp, &gi);
-
-    max_size = 0;
-    for (n = 0; n < gi.num_groups; ++n)
-    {
-        if (gi.size[n] > max_size) max_size = gi.size[n];
-    }
-    return max_size;
+    return gi.num_groups;
 }
 
 void select_move(Board *brd, Rect *move, bool *use_joker)
@@ -94,7 +86,12 @@ void select_move(Board *brd, Rect *move, bool *use_joker)
 
     board_encode_short(brd, buf);
     info("Analyzing board: %s", buf);
-    num_moves = analysis_value_moves(brd, moves, values);
+    num_moves = analysis_value_moves_minimax(brd, moves, values);
+    if (num_moves < 0)
+    {
+        info("Misere play infeasible; switching to normal play.\n");
+        num_moves = analysis_value_moves(brd, moves, values);
+    }
     info("%d moves found.", num_moves);
     if (num_moves == 0)
     {
@@ -109,7 +106,6 @@ void select_move(Board *brd, Rect *move, bool *use_joker)
         assert(values[n] >= -2 && values[n] <= +2);
         ++cnt[values[n] + 2];
     }
-    assert(cnt[2] == 0);
 
     *use_joker = (best_val == +2);
 

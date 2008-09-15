@@ -39,7 +39,26 @@ void analysis_nim_values(Board *brd, GroupInfo *gi);
    Moves are written to the moves array, values are written to the values
    array, and the number of moves available is returned. (The board provided
    is not modified.)
+
+   Assumes normal play (last player to move wins) unless only groups
+   equivalent to nim-heaps of size 1 or 0 remain. This strategy is not a
+   correct for misere play, but appears to work reasonably well when the real
+   analysis (with analysis_value_moves_misere) is infeasible.
 */
-int analysis_value_moves(Board *brd, Rect *moves, int *values);
+int analysis_value_moves_normal(Board *brd, Rect *moves, int *values);
+
+/* Alternative move valuation using minimax search.
+
+   Each value is set to one of:
+    +2: known to be winning (N-position)
+     0: status unknown
+    -2: known to be losing (P-position)
+
+   Assumes misere play (last player to move loses!).
+
+   If analysis is infeasible, -1 is returned, and the caller should use
+   analysis_value_moves_normal instead.
+*/
+int analysis_value_moves_misere(Board *brd, Rect *moves, int *values);
 
 #endif /* ndef ANALYSIS_H */

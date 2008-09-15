@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
     }
 
     /* Add analysis to data */
-    analysisNode = analyze_board(board);
+    analysisNode = analyze_board(&board);
     xmlAddChild(gameNode, analysisNode);
 
     /* Write output document */
