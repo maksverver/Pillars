@@ -2,10 +2,10 @@ CFLAGS=-g -ansi -Wall -Wextra -O2 -m32 -I/usr/include/libxml2 -I.
 LDFLAGS=-g -m32
 LDLIBS=-lm -lxml2
 
-SRC=Board.c Analysis.c Group.c
-OBJ=Board.o Analysis.o Group.o
+SRC=Board.c Analysis.c Group.c Normalization.c
+OBJ=Board.o Analysis.o Group.o Normalization.o
 
-PLAYER_SRCS=Analysis.c Group.c Board.c Debug.c main.c
+PLAYER_SRCS=$(SRC) Debug.c main.c
 
 EXECUTABLES=analyze benchmark analyze-board arbiter player board-to-xml shapes
 

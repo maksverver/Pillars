@@ -129,7 +129,7 @@ uint64_t hash_data[4][100] = {
 
 GroupCacheEntry *group_cache[HASH_TABLE_SIZE];
 
-__attribute__((noinline))
+#if 0
 static int nvalue_bruteforce_work(Mask *moves, int *skip, int grp_size)
 {
     static NV memo[1<<ANALYSIS_MAX_SIZE];
@@ -167,7 +167,6 @@ static int nvalue_bruteforce_work(Mask *moves, int *skip, int grp_size)
 
 /* Alternative, brute-force implementation of nim-value analysis, which
    does not utilize the global cache. */
-__attribute__((noinline))
 static NV group_nvalue_bruteforce(Group *gr)
 {
     static Mask moves[MAX_MOVES+1];
@@ -227,7 +226,7 @@ static NV group_nvalue_bruteforce(Group *gr)
     /* Calculate nim value (this takes the most time) */
     return nvalue_bruteforce_work(moves, skip, gr->pop);
 }
-
+#endif
 
 void debug_cache_info()
 {
@@ -245,114 +244,6 @@ void debug_cache_info()
     printf( "Total cache population: %d (size: %d; %2.3f%% full)\n",
             total, HASH_TABLE_SIZE, 100.0*total/HASH_TABLE_SIZE );
     for (n = 0; n <= 20; ++n) printf("%4d: %12d\n", n, cnt[n]);
-}
-
-static void mirror_horizontal(Group *src, Group *dst)
-{
-    int r, c1, c2;
-
-    dst->height = src->height;
-    dst->width  = src->width;
-    for (r = 0; r < src->height; ++r)
-    {
-        c1 = 0;
-        c2 = src->width;
-        while (c2 > 0) dst->board[r][c1++] = src->board[r][--c2];
-    }
-    dst->pop = src->pop;
-}
-
-static void mirror_vertical(Group *src, Group *dst)
-{
-    int r1, r2, c;
-
-    dst->height = src->height;
-    dst->width  = src->width;
-
-    r1 = 0;
-    r2 = src->height;
-    while (r2 > 0)
-    {
-        --r2;
-        for (c = 0; c < src->width; ++c) dst->board[r1][c] = src->board[r2][c];
-        ++r1;
-    }
-    dst->pop = src->pop;
-}
-
-static void mirror_diagonal(Group *src, Group *dst)
-{
-    int r, c;
-
-    dst->height = src->width;
-    dst->width  = src->height;
-
-    for (r = 0; r < dst->height; ++r)
-    {
-        for (c = 0; c < dst->width; ++c)
-        {
-            dst->board[r][c] = src->board[c][r];
-        }
-    }
-    dst->pop = src->pop;
-}
-
-static int group_cmp(Group *gr1, Group *gr2)
-{
-    int r, c;
-    assert(gr1->height == gr2->height && gr1->width == gr2->width);
-    for (r = 0; r < gr1->height; ++r)
-    {
-        for (c = 0; c < gr1->width; ++c)
-        {
-            if (gr1->board[r][c] != gr2->board[r][c])
-            {
-                return gr1->board[r][c] - gr2->board[r][c];
-            }
-        }
-    }
-    return 0;
-}
-
-/* Normalizes a group with respect to horizontal/vertical reflections
-   (but not rotations!) */
-static void group_normalize_half(Group *gr)
-{
-    Group alt1, alt2;
-
-    mirror_horizontal(gr, &alt1);
-    if (group_cmp(gr, &alt1) > 0) *gr = alt1;
-
-    mirror_vertical(&alt1, &alt2);
-    if (group_cmp(gr, &alt2) > 0) *gr = alt2;
-
-    mirror_horizontal(&alt2, &alt1);
-    if (group_cmp(gr, &alt1) > 0) *gr = alt1;
-}
-
-/* Normalizes a group with respect to rotations/reflections.
-   Note that this does not translate the group; the group is already assumed
-   to be in its bounding rectangle! */
-void group_normalize(Group *gr)
-{
-    Group alt;
-
-    if (gr->width == gr->height)
-    {
-        group_normalize_half(gr);
-        mirror_diagonal(gr, &alt);
-        group_normalize_half(&alt);
-        if (group_cmp(gr, &alt) > 0) *gr = alt;
-    }
-    else
-    {
-        if (gr->width < gr->height)
-        {
-            mirror_diagonal(gr, &alt);
-            *gr = alt;
-        }
-        group_normalize_half(gr);
-    }
 }
 
 void group_print(const Group *gr)
@@ -488,6 +379,7 @@ static void group_cache_store(GroupCacheEntry **gce, GroupId *id, NV nval)
     (*gce)->nvalue = nval;
 }
 
+#if 0
 /* Stores an nvalue for the given group, if it is not yet stored */
 static void insert_new_nval(Group *gr, NV nval)
 {
@@ -528,6 +420,7 @@ static void group_cache_store_alternatives(Group *gr, NV nval)
     mirror_vertical(&b, &a);
     insert_new_nval(&a, nval);
 }
+#endif
 
 __attribute__((noinline))
 static NV group_nvalue_smart(Group *gr)
@@ -610,6 +503,7 @@ NV group_nvalue(Group *gr)
     NV nval;
 
     /* Look up in cache */
+    group_normalize(gr);
     group_hash(gr, &id);
     gce = group_cache_lookup(&id);
     if (*gce != NULL) return (*gce)->nvalue;
@@ -625,7 +519,7 @@ NV group_nvalue(Group *gr)
 
     /* Store in cache */
     group_cache_store(gce, &id, nval);
-    group_cache_store_alternatives(gr, nval);
+    /* group_cache_store_alternatives(gr, nval); */
 
     return nval;
 }

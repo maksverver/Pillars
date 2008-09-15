@@ -1,6 +1,7 @@
 #ifndef GROUP_H_INCLUDED
 #define GROUP_H_INCLUDED
 
+#include "Board.h"
 #include <stdint.h>
 
 #define MAX_GROUPS            50    /* max. number of groups on a board */
