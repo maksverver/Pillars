@@ -131,7 +131,7 @@ void analysis_nim_values(Board *brd, GroupInfo *gi)
     gi->winning  = (num_large == 0) ^ (gi->nsum != 0);
 }
 
-int analysis_value_moves(Board *brd_in, Rect *moves, int *values)
+int analysis_value_moves_normal(Board *brd_in, Rect *moves, int *values)
 {
     int move, num_moves;
     Board brd;
@@ -191,10 +191,10 @@ void remove_singleton_pairs(Board *brd)
     }
 }
 
-int analysis_value_moves_minimax(Board *brd_in, Rect *moves, int *values)
+int analysis_value_moves_misere(Board *brd_in, Rect *moves, int *values)
 {
     static Mask mm[MAX_MOVES+1];
-    static bool won[1<<ANALYSIS_MAX_SIZE];
+    static bool won[1<<MINIMAX_MAX_SIZE];
 
     Board brd, labels;
     Mask *m;
@@ -229,7 +229,7 @@ int analysis_value_moves_minimax(Board *brd_in, Rect *moves, int *values)
     }
 
     /* Check wether search is feasible */
-    if (num_spaces > ANALYSIS_MAX_SIZE)
+    if (num_spaces > MINIMAX_MAX_SIZE)
     {
         return -1;
     }

@@ -32,8 +32,8 @@ int main(int argc, char *argv[])
     printf("Board:\n");
     board_print(&board, stdout);
 
-    num_moves1 = analysis_value_moves(&board, moves1, values1);
-    num_moves2 = analysis_value_moves_minimax(&board, moves2, values2);
+    num_moves1 = analysis_value_moves_normal(&board, moves1, values1);
+    num_moves2 = analysis_value_moves_misere(&board, moves2, values2);
     assert(num_moves1 == num_moves2);
 
     printf("Winning moves:\n");

@@ -9,6 +9,13 @@
 #define ANALYSIS_MAX_SIZE     18    /* max. size of group for in-depth analysis */
 #endif
 
+#ifndef MINIMAX_MAX_SIZE
+                                    /* max. number of open fields to perform
+                                       minimax search on. */
+#define MINIMAX_MAX_SIZE (ANALYSIS_MAX_SIZE + 2)
+#endif
+
+
 typedef signed char NV;             /* a nim-value */
 typedef uint32_t Mask;              /* bitmask for analysis */
 typedef uint32_t NVSet;             /* set of nim-values */
