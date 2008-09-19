@@ -254,8 +254,7 @@ void group_print(const Group *gr)
     {
         for (c = 0; c < gr->width; ++c)
         {
-            fputc( gr->board[r][c] >= 0 && gr->board[r][c] < 10
-                    ? '0' + gr->board[r][c] : '?', stdout);
+            fputc(".x"[(gr->rows[r]>>c)&1], stdout);
         }
         fputc('\n', stdout);
     }
@@ -270,11 +269,12 @@ void group_isolate(Group *src, int r, int c, Group *dst)
     int q[100][2], qlen, qpos;     /* flood-fill queue */
     Rect b;                        /* bounding rectangle */
 
-    memset(&dst->board, 0, sizeof(Board));
+    memset(dst->rows, 0, sizeof(dst->rows));
     b.p.r = b.p.c = 9;
     b.q.r = b.q.c = 0;
 
-    src->board[r][c] = 0;
+    assert(GR_GET(src, r, c));
+    GR_TOG(src, r, c);
     q[0][0] = r;
     q[0][1] = c;
     qlen = 1;
@@ -282,53 +282,58 @@ void group_isolate(Group *src, int r, int c, Group *dst)
     {
         r = q[qpos][0];
         c = q[qpos][1];
-        dst->board[r][c] = 1;
+        GR_TOG(dst, r, c);
 
         if (r < b.p.r) b.p.r = r;
         if (r > b.q.r) b.q.r = r;
         if (c < b.p.c) b.p.c = c;
         if (c > b.q.c) b.q.c = c;
 
-        if (r - 1 >= 0 && src->board[r - 1][c])
+        if (r - 1 >= 0 && GR_GET(src, r - 1, c))
         {
-            src->board[r - 1][c] = 0;
+            GR_TOG(src, r - 1, c);
             q[qlen][0] = r - 1;
             q[qlen][1] = c;
             ++qlen;
         }
 
-        if (r + 1 < src->height && src->board[r + 1][c])
+        if (r + 1 < src->height && GR_GET(src, r + 1, c))
         {
-            src->board[r + 1][c] = 0;
+            GR_TOG(src, r + 1, c);
             q[qlen][0] = r + 1;
             q[qlen][1] = c;
             ++qlen;
         }
 
-        if (c - 1 >= 0 && src->board[r][c - 1])
+        if (c - 1 >= 0 && GR_GET(src, r, c - 1))
         {
-            src->board[r][c - 1] = 0;
+            GR_TOG(src, r, c - 1);
             q[qlen][0] = r;
             q[qlen][1] = c - 1;
             ++qlen;
         }
 
-        if (c + 1 < src->width && src->board[r][c + 1])
+        if (c + 1 < src->width && GR_GET(src, r, c + 1))
         {
-            src->board[r][c + 1] = 0;
+            GR_TOG(src, r, c + 1);
             q[qlen][0] = r;
             q[qlen][1] = c + 1;
             ++qlen;
         }
     }
 
-    /* Translate isolated group to upper-left corner */
     dst->height = b.q.r - b.p.r + 1;
     dst->width  = b.q.c - b.p.c + 1;
-    assert(sizeof(dst->board[0]) == 10);
-    memmove(&dst->board[0][0], &dst->board[b.p.r][b.p.c],
-        sizeof(dst->board[0])*(b.q.r - b.p.r) + (b.q.c - b.p.c + 1));
-    dst->pop = qlen;
+
+    /* Translate isolated group to upper-left corner */
+    {
+        int r;
+        for (r = 0; r < dst->height; ++r)
+        {
+            dst->rows[r] = dst->rows[r + b.p.r] >> b.p.c;
+        }
+        for ( ; r < 10; ++r) dst->rows[r] = 0;
+    }
 }
 
 static void group_hash(Group *gr, GroupId *id)
@@ -343,7 +348,7 @@ static void group_hash(Group *gr, GroupId *id)
     {
         for (c = 0; c < gr->width; ++c)
         {
-            if (gr->board[r][c])
+            if (GR_GET(gr, r, c))
             {
                 id->hash[0] ^= hash_data[0][10*r + c];
                 id->hash[1] ^= hash_data[1][10*r + c];
@@ -435,35 +440,35 @@ static NV group_nvalue_smart(Group *gr)
     {
         for (m.p.c = 0; m.p.c < gr->width; ++m.p.c)
         {
-            if (!gr->board[m.p.r][m.p.c]) continue;
+            if (!GR_GET(gr, m.p.r, m.p.c)) continue;
 
             for (m.q.r = m.p.r; m.q.r < gr->height; ++m.q.r)
             {
-                if (!gr->board[m.q.r][m.p.c]) break;
+                if (!GR_GET(gr, m.q.r, m.p.c)) break;
                 for (m.q.c = m.p.c; m.q.c < gr->width; ++m.q.c)
                 {
                     Group ngr, nngr;
                     int r, c;
-                    NV nnval;       /* nim-value of new groups */
+                    NV nnval;       /* nim-value of new group */
 
                     /* Check if rectangle is covered completely by fields */
                     for (r = m.p.r; r <= m.q.r; ++r)
                     {
                         for (c = m.p.c; c <= m.q.c; ++c)
                         {
-                            if (!gr->board[r][c]) goto invalid;
+                            if (!GR_GET(gr, r, c)) goto invalid;
                         }
                     }
 
                     /* Construct new group, with selected rectangle removed */
-                    ngr = *gr;
-                    for (r = m.p.r; r <= m.q.r; ++r)
+                    ngr.height = gr->height;
+                    ngr.width  = gr->width;
+                    for (r = 0; r < m.p.r; ++r) ngr.rows[r] = gr->rows[r];
+                    for (; r <= m.q.r; ++r)
                     {
-                        for (c = m.p.c; c <= m.q.c; ++c)
-                        {
-                            ngr.board[r][c] = 0;
-                        }
+                        ngr.rows[r] = gr->rows[r] ^ (((1<<(m.q.c - m.p.c + 1)) - 1) << m.p.c);
                     }
+                    for (; r < gr->height; ++r) ngr.rows[r] = gr->rows[r];
 
                     /* Split up into groups */
                     nnval = 0;
@@ -471,10 +476,10 @@ static NV group_nvalue_smart(Group *gr)
                     {
                         for (c = 0; c < gr->width; ++c)
                         {
-                            if (ngr.board[r][c] != 0)
+                            if (GR_GET(&ngr, r, c) != 0)
                             {
                                 group_isolate(&ngr, r, c, &nngr);
-                                nnval ^= nngr.pop == 1 ? 1 : group_nvalue(&nngr);
+                                nnval ^= group_nvalue(&nngr);
                             }
                         }
                     }
@@ -509,13 +514,7 @@ NV group_nvalue(Group *gr)
     if (*gce != NULL) return (*gce)->nvalue;
 
     /* Calculate nim value */
-    /*
-    FIXME: this only makes sense if we can cache partial values
-    (and even then, what's the point?)
-    nval = gr->pop < 25 ? group_nvalue_bruteforce(gr) : group_nvalue_smart(gr);
-    */
     nval = group_nvalue_smart(gr);
-
 
     /* Store in cache */
     group_cache_store(gce, &id, nval);

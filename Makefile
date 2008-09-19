@@ -7,7 +7,7 @@ OBJ=Board.o Analysis.o Group.o Normalization.o
 
 PLAYER_SRCS=$(SRC) Debug.c main.c
 
-EXECUTABLES=analyze benchmark analyze-board arbiter player board-to-xml shapes
+EXECUTABLES=analyze benchmark analyze-board arbiter player board-to-xml
 
 all: $(EXECUTABLES) player.c
 

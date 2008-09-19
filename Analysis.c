@@ -17,13 +17,15 @@ static NV nvalue(Board *brd, GroupInfo *gi, int g)
 
     gr.height = gi->bounds[g].q.r - gi->bounds[g].p.r;
     gr.width  = gi->bounds[g].q.c - gi->bounds[g].p.c;
-    gr.pop    = 0;
     for (r = 0; r < gr.height; ++r)
     {
+        gr.rows[r] = 0;
         for (c = 0; c < gr.width; ++c)
         {
-            gr.board[r][c] = (*brd)[r + gi->bounds[g].p.r][c + gi->bounds[g].p.c] == g + 1;
-            gr.pop += gr.board[r][c];
+            if ((*brd)[r + gi->bounds[g].p.r][c + gi->bounds[g].p.c] == g + 1)
+            {
+                GR_SET(&gr, r, c);
+            }
         }
     }
 

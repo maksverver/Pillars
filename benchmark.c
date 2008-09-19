@@ -14,14 +14,13 @@ const char *board_desc = "0V0V0V0VVVVVVVVVVVVV";
 int nval = 9;
 */
 
-/*
 const char *board_desc = "0V0V0V0V0VVVVVVVVVVV";
 int nval = 8;
-*/
 
+/*
 const char *board_desc = "OV0180V3VVVVVVVVVVVV";
 int nval = 24;
-
+*/
 void debug_cache_info();
 
 int main()
@@ -47,7 +46,10 @@ int main()
         printf("memo dumped to memo55.dat\n");
     }
     */
-    assert(gi.nval[0] == nval);
+    if (gi.nval[0] != nval)
+    {
+        printf("Expected nim-value %d, computed %d!\n", nval, gi.nval[0]);
+    }
     debug_cache_info();
     return 0;
 }

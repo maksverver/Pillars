@@ -16,6 +16,10 @@
 #define MINIMAX_MAX_SIZE (ANALYSIS_MAX_SIZE + 2)
 #endif
 
+#define GR_GET(gr, r, c) (((gr)->rows[(int)(r)] >> (int)(c))&1)
+#define GR_SET(gr, r, c) ((void)((gr)->rows[(int)(r)] |= (1<<(int)(c))))
+#define GR_CLR(gr, r, c) ((gr)->rows[(int)(r)] &= ~(1<<(int)(c)))
+#define GR_TOG(gr, r, c) ((gr)->rows[(int)(r)] ^= (1<<(int)(c)))
 
 typedef signed char NV;             /* a nim-value */
 typedef uint32_t Mask;              /* bitmask for analysis */
@@ -27,8 +31,7 @@ typedef uint32_t NVSet;             /* set of nim-values */
 typedef struct Group
 {
     int height, width;
-    Board board;
-    int pop;
+    uint16_t rows[10];
 } Group;
 
 NV group_nvalue(Group *gr);
