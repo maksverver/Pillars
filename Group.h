@@ -26,7 +26,7 @@ typedef struct Group
 
 NV group_nvalue(Group *gr);
 void group_print(const Group *gr);
-void group_isolate(Group *src, int r, int c, Group *dst);
+int group_isolate(Group *src, int r, int c, Group *dst);
 
 /* Defined in Normalization.c */
 void group_normalize(Group *gr);

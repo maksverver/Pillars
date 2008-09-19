@@ -264,7 +264,7 @@ void group_print(const Group *gr)
    form; i.e. it may contain multiple connected components). The subgroup is
    moved form src to dst (so both arguments are modified!)
 */
-void group_isolate(Group *src, int r, int c, Group *dst)
+int group_isolate(Group *src, int r, int c, Group *dst)
 {
     /* flood-fill queue */
     uint8_t q[100][2];
@@ -348,6 +348,8 @@ void group_isolate(Group *src, int r, int c, Group *dst)
         }
         for ( ; r < 10; ++r) dst->rows[r] = 0;
     }
+
+    return qlen;
 }
 
 static void group_hash(Group *gr, GroupId *id)
@@ -472,8 +474,9 @@ static NV group_nvalue_smart(Group *gr)
                         while (ngr.rows[r] != 0)
                         {
                             c = __builtin_ctz(ngr.rows[r]);
-                            group_isolate(&ngr, r, c, &nngr);
-                            nnval ^= group_nvalue(&nngr);
+                            nnval ^= group_isolate(&ngr, r, c, &nngr) > 1
+                                     ? group_nvalue(&nngr) : 1;
+
                         }
                     }
 
