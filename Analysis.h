@@ -4,6 +4,16 @@
 #include "Board.h"
 #include "Group.h"
 
+#ifndef ANALYSIS_MAX_SIZE
+        /* max. group size for normal-play analysis */
+#define ANALYSIS_MAX_SIZE 20
+#endif
+
+#ifndef MINIMAX_MAX_SIZE
+        /* max. combined size for misere-play analysis */
+#define MINIMAX_MAX_SIZE  ANALYSIS_MAX_SIZE
+#endif
+
 typedef struct GroupInfo
 {
     int num_groups;             /* number of groups identified */

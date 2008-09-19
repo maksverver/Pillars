@@ -25,7 +25,7 @@ runguard: runguard.c
 	$(CC) -o $@ -Wall -O2 -m32 $^
 
 benchmark: $(SRC) benchmark.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -DANALYSIS_MAX_SIZE=25 -fno-inline-functions -o $@ $^ $(LDLIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -DANALYSIS_MAX_SIZE=25 -o $@ $^ $(LDLIBS)
 
 player.c: $(PLAYER_SRCS) Analysis.h Board.h
 	./compile.pl $(PLAYER_SRCS) > player.c

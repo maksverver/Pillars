@@ -125,7 +125,7 @@ uint64_t hash_data[4][100] = {
         0x8c8600bbu, 0xcf4e6a58u, 0xb247ce6au, 0x4228be94u
     } };
 
-#define HASH_TABLE_SIZE (2000019)
+#define HASH_TABLE_SIZE (3999971)
 
 GroupCacheEntry *group_cache[HASH_TABLE_SIZE];
 
@@ -340,8 +340,8 @@ static void group_hash(Group *gr, GroupId *id)
 {
     int r, c;
 
-    id->hash[0] = 0;
-    id->hash[1] = 0;
+    id->hash[0] = gr->height;
+    id->hash[1] = gr->width;
     id->hash[2] = 0;
     id->hash[3] = 0;
     for (r = 0; r < gr->height; ++r)
@@ -384,7 +384,6 @@ static void group_cache_store(GroupCacheEntry **gce, GroupId *id, NV nval)
     (*gce)->nvalue = nval;
 }
 
-#if 0
 /* Stores an nvalue for the given group, if it is not yet stored */
 static void insert_new_nval(Group *gr, NV nval)
 {
@@ -393,39 +392,20 @@ static void insert_new_nval(Group *gr, NV nval)
 
     group_hash(gr, &id);
     gce = group_cache_lookup(&id);
-    if (*gce != NULL) return;
-    group_cache_store(gce, &id, nval);
+    if (*gce == NULL) group_cache_store(gce, &id, nval);
 }
 
-/* Stores alternate (but equivalent) configurations of the given group
-   in the group cache.
-   NB: Assumes the primary configuration has already been stored! */
-static void group_cache_store_alternatives(Group *gr, NV nval)
+/* Stores all configurations of the given group in the group cache, including
+   all equivalent configurations obtained by rotations/reflections. */
+static void group_cache_store_all(Group *gr, NV nval)
 {
-    Group a, b;
+    Group alts[8];
+    int n, num_alts;
 
-    mirror_horizontal(gr, &a);
-    insert_new_nval(&a, nval);
-
-    mirror_vertical(&a, &b);
-    insert_new_nval(&b, nval);
-
-    mirror_vertical(&b, &a);
-    insert_new_nval(&a, nval);
-
-    mirror_diagonal(&a, &b);
-    insert_new_nval(&b, nval);
-
-    mirror_horizontal(&b, &a);
-    insert_new_nval(&a, nval);
-
-    mirror_vertical(&a, &b);
-    insert_new_nval(&b, nval);
-
-    mirror_vertical(&b, &a);
-    insert_new_nval(&a, nval);
+    alts[0] = *gr;
+    num_alts = group_alternatives(alts);
+    for (n = 0; n < num_alts; ++n) insert_new_nval(&alts[n], nval);
 }
-#endif
 
 __attribute__((noinline))
 static NV group_nvalue_smart(Group *gr)
@@ -508,7 +488,7 @@ NV group_nvalue(Group *gr)
     NV nval;
 
     /* Look up in cache */
-    group_normalize(gr);
+    /* group_normalize(gr); */
     group_hash(gr, &id);
     gce = group_cache_lookup(&id);
     if (*gce != NULL) return (*gce)->nvalue;
@@ -517,8 +497,8 @@ NV group_nvalue(Group *gr)
     nval = group_nvalue_smart(gr);
 
     /* Store in cache */
-    group_cache_store(gce, &id, nval);
-    /* group_cache_store_alternatives(gr, nval); */
+    /* group_cache_store(gce, &id, nval); */
+    group_cache_store_all(gr, nval);
 
     return nval;
 }

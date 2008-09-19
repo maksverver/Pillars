@@ -94,12 +94,15 @@ void select_move(Board *brd, Rect *move, bool *use_joker)
     board_encode_short(brd, buf);
     info("Analyzing board: %s", buf);
     num_moves = analysis_value_moves_misere(brd, moves, values);
-    if (num_moves < 0)
+    if (num_moves >= 0)
     {
-        info("Misere play infeasible; switching to normal play.");
-        num_moves = analysis_value_moves_normal(brd, moves, values);
+        info("Misere play");
     }
-    info("%d moves found.", num_moves);
+    else
+    {
+        num_moves = analysis_value_moves_normal(brd, moves, values);
+        info("Normal play");
+    }
     if (num_moves == 0)
     {
         fatal("No valid moves available");
@@ -131,8 +134,8 @@ void select_move(Board *brd, Rect *move, bool *use_joker)
         }
     }
 
-    info("-2/-1/+1/+2: %d/%d/%d/%d (best value: %d; tiebreaker: %d)",
-        cnt[0], cnt[1], cnt[3], cnt[4], best_val, best_tb);
+    info("-2/-1/0/+1/+2: %d/%d/%d/%d/%d (best: %d; tiebreaker: %d)",
+        cnt[0], cnt[1], cnt[2], cnt[3], cnt[4], best_val, best_tb);
 }
 
 int main()
