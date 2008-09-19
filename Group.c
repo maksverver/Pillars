@@ -19,7 +19,7 @@ typedef struct GroupCacheEntry
 } GroupCacheEntry;
 
 
-uint64_t hash_data[4][100] = {
+uint32_t hash_data[4][100] = {
     {   0x0a25244du, 0x917ade9fu, 0xbc875b53u, 0xc70cfaa5u,
         0x96b3f82fu, 0xad84fbb0u, 0x25ec883fu, 0x249a03fcu,
         0x68f76ac1u, 0x9b011c6fu, 0x8de11b5du, 0xca7efa1eu,
@@ -266,12 +266,13 @@ void group_print(const Group *gr)
 */
 void group_isolate(Group *src, int r, int c, Group *dst)
 {
-    int q[100][2], qlen, qpos;     /* flood-fill queue */
-    Rect b;                        /* bounding rectangle */
+    /* flood-fill queue */
+    uint8_t q[100][2];
+    int qlen, qpos;
+    /* bounding rectangle */
+    Rect b;
 
     memset(dst->rows, 0, sizeof(dst->rows));
-    b.p.r = b.p.c = 9;
-    b.q.r = b.q.c = 0;
 
     assert(GR_GET(src, r, c));
     GR_TOG(src, r, c);
@@ -283,11 +284,6 @@ void group_isolate(Group *src, int r, int c, Group *dst)
         r = q[qpos][0];
         c = q[qpos][1];
         GR_TOG(dst, r, c);
-
-        if (r < b.p.r) b.p.r = r;
-        if (r > b.q.r) b.q.r = r;
-        if (c < b.p.c) b.p.c = c;
-        if (c > b.q.c) b.q.c = c;
 
         if (r - 1 >= 0 && GR_GET(src, r - 1, c))
         {
@@ -305,7 +301,7 @@ void group_isolate(Group *src, int r, int c, Group *dst)
             ++qlen;
         }
 
-        if (c - 1 >= 0 && GR_GET(src, r, c - 1))
+        if (c && ((src->rows[r] & (1 << (c - 1)))))
         {
             GR_TOG(src, r, c - 1);
             q[qlen][0] = r;
@@ -313,13 +309,31 @@ void group_isolate(Group *src, int r, int c, Group *dst)
             ++qlen;
         }
 
-        if (c + 1 < src->width && GR_GET(src, r, c + 1))
+        if (src->rows[r] & (1 << (c + 1)))
         {
             GR_TOG(src, r, c + 1);
             q[qlen][0] = r;
             q[qlen][1] = c + 1;
             ++qlen;
         }
+    }
+
+    /* Determine bounding rectangle */
+    {
+        int mask;
+
+        b.p.r = 0;
+        while (!dst->rows[b.p.r]) ++b.p.r;
+        b.q.r = src->height - 1;
+        while (!dst->rows[b.q.r]) --b.q.r;
+
+        mask = 0;
+        for (r = b.p.r; r <= b.q.r; ++r) mask |= dst->rows[r];
+
+        b.p.c = 0;
+        while ((mask & (1<<b.p.c)) == 0) ++b.p.c;
+        b.q.c = 9;
+        while ((mask & (1<<b.q.c)) == 0) --b.q.c;
     }
 
     dst->height = b.q.r - b.p.r + 1;
@@ -338,22 +352,23 @@ void group_isolate(Group *src, int r, int c, Group *dst)
 
 static void group_hash(Group *gr, GroupId *id)
 {
-    int r, c;
+    int r, c, bit;
 
-    id->hash[0] = gr->height;
-    id->hash[1] = gr->width;
+    id->hash[0] = 16777619*gr->height ^ gr->width;
+    id->hash[1] = 0;
     id->hash[2] = 0;
     id->hash[3] = 0;
     for (r = 0; r < gr->height; ++r)
     {
+        bit = 1;
         for (c = 0; c < gr->width; ++c)
         {
-            if (GR_GET(gr, r, c))
+            if (gr->rows[r]&(1<<c))
             {
                 id->hash[0] ^= hash_data[0][10*r + c];
                 id->hash[1] ^= hash_data[1][10*r + c];
                 id->hash[2] ^= hash_data[2][10*r + c];
-                id->hash[3] ^= hash_data[3][10*r + c];
+                /* id->hash[3] ^= hash_data[3][10*r + c]; */
             }
         }
     }
@@ -454,13 +469,11 @@ static NV group_nvalue_smart(Group *gr)
                     nnval = 0;
                     for (r = 0; r < gr->height; ++r)
                     {
-                        for (c = 0; c < gr->width; ++c)
+                        while (ngr.rows[r] != 0)
                         {
-                            if (GR_GET(&ngr, r, c) != 0)
-                            {
-                                group_isolate(&ngr, r, c, &nngr);
-                                nnval ^= group_nvalue(&nngr);
-                            }
+                            c = __builtin_ctz(ngr.rows[r]);
+                            group_isolate(&ngr, r, c, &nngr);
+                            nnval ^= group_nvalue(&nngr);
                         }
                     }
 
