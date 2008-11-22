@@ -312,7 +312,7 @@ int analysis_value_moves_misere(Board *brd_in, Rect *moves, int *values)
         est_iter = (2LL*(twos + 1)*(num_moves + 3)) << num_spaces;
     }
 
-    fprintf(stderr, "Est. iterations: %lld", est_iter);
+    fprintf(stderr, "Est. iterations: %lld\n", est_iter);
 
     if (est_iter > MINIMAX_MAX_ITERATIONS) return -1;
 

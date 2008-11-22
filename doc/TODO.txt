@@ -1,21 +1,16 @@
-BUGFIX:
-  See: http://www.codecup.nl/showgame.php?ga=29398
-  If all moves are losing according to misere play, prefer moves that
-  are winning according to normal play.
+- Update heuristic: favour creation of many 1/2/3 groups?
+  (This doesn't really seem to help)
 
-- Return +3/-3 for misere-play assessment of field (should always be accurate)
+Maybe:
+  - In value_moves_misere, skip null moves automatically
+    (slight performance improvement; but we still need to
+     value these moves)
 
-- In value_moves_misere, skip null moves automatically
-- In analysis_value_moves_misere, incorporate non-null-move-count in
-  estimation of whether exhaustive search is feasible.
-
-- Cache analysed misere boards to avoid timeouts
-  (see timeout games for examples where this helps)
+  - Cache analysed misere boards to avoid timeouts
+    (see timeout games for examples where this helps)
   .. also use this to implement 1-move lookahead.
   This helps when the field is too complex to analyze in detail,
   but there is a (large) winning move into a simpler field.
-
-- Update heuristic: favour creation of many 1/2/3 groups?
 
 LONG TERM:
 - Make more efficient use of time

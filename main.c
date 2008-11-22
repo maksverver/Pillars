@@ -109,8 +109,8 @@ void select_move(Board *brd, Rect *move, bool *use_joker)
     }
 
     fallback = false;
-search_values:
     best_val = -3;
+search_values:
     memset(cnt, 0, sizeof(cnt));
     for (n = 0; n < num_moves; ++n)
     {
