@@ -51,7 +51,7 @@ void analysis_nim_values(Board *brd, GroupInfo *gi);
    is not modified.)
 
    Assumes normal play (last player to move wins) unless only groups
-   equivalent to nim-heaps of size 1 or 0 remain. This strategy is not a
+   equivalent to nim-heaps of size 1 or 0 remain. This strategy is not
    correct for misere play, but appears to work reasonably well when the real
    analysis (with analysis_value_moves_misere) is infeasible.
 */
@@ -60,9 +60,9 @@ int analysis_value_moves_normal(Board *brd, Rect *moves, int *values);
 /* Alternative move valuation using minimax search.
 
    Each value is set to one of:
-    +2: known to be winning (N-position)
+    +3: known to be winning (N-position)
      0: status unknown
-    -2: known to be losing (P-position)
+    -3: known to be losing (P-position)
 
    Assumes misere play (last player to move loses!).
 

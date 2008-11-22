@@ -87,8 +87,9 @@ void select_move(Board *brd, Rect *move, bool *use_joker)
 {
     Rect moves[MAX_MOVES];
     int values[MAX_MOVES];
-    int num_moves, n, cnt[5], best_val, tb, best_tb;
+    int num_moves, n, cnt[7], best_val, tb, best_tb;
     char buf[26];
+    bool fallback;
 
     board_encode_short(brd, buf);
     info("Analyzing board: %s", buf);
@@ -107,16 +108,25 @@ void select_move(Board *brd, Rect *move, bool *use_joker)
         fatal("No valid moves available");
     }
 
-    best_val = -2;
+    fallback = false;
+search_values:
+    best_val = -3;
     memset(cnt, 0, sizeof(cnt));
     for (n = 0; n < num_moves; ++n)
     {
         if (values[n] > best_val) best_val = values[n];
-        assert(values[n] >= -2 && values[n] <= +2);
-        ++cnt[values[n] + 2];
+        assert(values[n] >= -3 && values[n] <= +3);
+        ++cnt[values[n] + 3];
+    }
+    if (best_val == -3)
+    {
+        info("All misere moves are losing; fall back to normal play");
+        fallback = true;
+        num_moves = analysis_value_moves_normal(brd, moves, values);
+        goto search_values;
     }
 
-    *use_joker = (best_val == +2);
+    *use_joker = !fallback && (best_val >= +2);
 
     shuffle_moves_and_values(moves, values, num_moves);
     best_tb = -1;
@@ -133,8 +143,8 @@ void select_move(Board *brd, Rect *move, bool *use_joker)
         }
     }
 
-    info("-2/-1/0/+1/+2: %d/%d/%d/%d/%d (best: %d; tiebreaker: %d)",
-        cnt[0], cnt[1], cnt[2], cnt[3], cnt[4], best_val, best_tb);
+    info( "-3/-2/-1/0/+1/+2/+3: %d/%d/%d/%d/%d/%d/%d (best: %d; tiebreaker: %d)",
+          cnt[0], cnt[1], cnt[2], cnt[3], cnt[4], cnt[5], cnt[6], best_val, best_tb );
 }
 
 int main(int argc, char *argv[])

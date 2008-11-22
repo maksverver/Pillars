@@ -260,7 +260,7 @@ static void value_moves_misere(
     {
         if (mm[n] != (Mask)-1)
         {
-            values[n] = won[twos][ones][((1<<spaces)-1)^mm[n]] ? -2 : +2;
+            values[n] = won[twos][ones][((1<<spaces)-1)^mm[n]] ? -3 : +3;
         }
         else
         {
@@ -268,7 +268,7 @@ static void value_moves_misere(
             memcpy(&tmp, brd, sizeof(tmp));
             board_fill(&tmp, &moves[n], -1);
             erase_trivial_groups(&tmp, &one, &two);
-            values[n] = won[two][one][(1<<spaces)-1] ? -2 : +2;
+            values[n] = won[two][one][(1<<spaces)-1] ? -3 : +3;
         }
     }
 }
