@@ -23,6 +23,7 @@ void message(int severity, const char *fmt, va_list ap)
     }
     vfprintf(stderr, fmt, ap);
     fputc('\n', stderr);
+    fflush(stderr);
 }
 
 void info(const char *fmt, ...)

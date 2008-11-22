@@ -1,4 +1,4 @@
-CFLAGS=-g -ansi -Wall -Wextra -O2 -m32 -I/usr/include/libxml2 -I.
+CFLAGS=-g -ansi -Wall -Wextra -O2 -m32 -I/usr/include/libxml2 -I. 
 LDFLAGS=-g -m32
 LDLIBS=-lm -lxml2
 
@@ -25,7 +25,7 @@ runguard: runguard.c
 	$(CC) -o $@ -Wall -O2 -m32 $^
 
 benchmark: $(SRC) benchmark.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -DANALYSIS_MAX_SIZE=25 -o $@ $^ $(LDLIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -DANALYSIS_MAX_SIZE=25 -fno-inline -o $@ $^ $(LDLIBS)
 
 player.c: $(PLAYER_SRCS) Analysis.h Board.h
 	./compile.pl $(PLAYER_SRCS) > player.c
@@ -34,10 +34,10 @@ player: player.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o player player.c $(LDLIBS)
 
 board-to-xml: Board.o tools/board-to-xml.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 shapes: ${OBJ} tools/shapes.cpp
-	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ $^
+	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ $^ ($LDLIBS)
 
 clean:
 	rm -f *.o

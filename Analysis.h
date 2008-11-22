@@ -5,13 +5,13 @@
 #include "Group.h"
 
 #ifndef ANALYSIS_MAX_SIZE
-        /* max. group size for normal-play analysis */
-#define ANALYSIS_MAX_SIZE 20
+#define ANALYSIS_MAX_SIZE 20    /* max. group size for normal-play analysis */
 #endif
 
-#ifndef MINIMAX_MAX_SIZE
-        /* max. combined size for misere-play analysis */
-#define MINIMAX_MAX_SIZE  ANALYSIS_MAX_SIZE
+/* max. number of iterations to perform minimax analsyis.
+    (currently does not include number of moves, which matter too!) */
+#ifndef MINIMAX_MAX_ITERATIONS
+#define MINIMAX_MAX_ITERATIONS 1200000
 #endif
 
 typedef struct GroupInfo

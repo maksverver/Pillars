@@ -156,85 +156,47 @@ int analysis_value_moves_normal(Board *brd_in, Rect *moves, int *values)
     return num_moves;
 }
 
-/* Determines wether the space at (r,c) is a singleton space; i.e.
-   it's completely surrounded by blocked squares or the edge of the board. */
-static bool singleton(Board *brd, int r, int c)
+static void erase_trivial_groups(Board *brd, int *ones, int *twos)
 {
-    assert((*brd)[r][c] == 0);
-    return (r == 0 || (*brd)[r - 1][c] != 0) &&
-           (c == 0 || (*brd)[r][c - 1] != 0) &&
-           (r == 9 || (*brd)[r + 1][c] != 0) &&
-           (c == 9 || (*brd)[r][c + 1] != 0);
-}
+    GroupInfo gi;
+    int g, r, c;
 
-void remove_singleton_pairs(Board *brd)
-{
-    int r, c, last_r = -1, last_c = -1;
+    *ones = *twos = 0;
 
-    for (r = 0; r < 10; ++r)
+    board_flatten(brd);
+    analysis_identify_groups(brd, &gi);
+    for (g = 0; g < gi.num_groups; ++g)
     {
-        for (c = 0; c < 10; ++c)
+        if (gi.size[g] <= 3)
         {
-            if ((*brd)[r][c] == 0 && singleton(brd, r, c))
+            if (gi.size[g]&1) *ones ^= 1;
+            if (gi.size[g]&2) *twos += 1;
+
+            for (r = 0; r < 10; ++r)
             {
-                if (last_r >= 0 && last_c >= 0)
+                for (c = 0; c < 10; ++c)
                 {
-                    (*brd)[r][c] = -2;
-                    (*brd)[last_r][last_c] = -2;
-                    last_r = last_c = -1;
-                }
-                else
-                {
-                    last_r = r;
-                    last_c = c;
+                    if ((*brd)[r][c] == g + 1) (*brd)[r][c] = -1;
                 }
             }
         }
     }
+    board_clear_groups(brd);
 }
 
-int analysis_value_moves_misere(Board *brd_in, Rect *moves, int *values)
+/* Does the actual work of evaluating misere values of moves.
+
+   Note: dynamically allocates a lot of stack space!
+*/
+static void value_moves_misere(
+    Board *brd, Board *labels,
+    int num_moves, Rect *moves, int *values,
+    const int spaces, const int ones, const int twos )
 {
-    static Mask mm[MAX_MOVES+1];
-    static bool won[1<<MINIMAX_MAX_SIZE];
-
-    Board brd, labels;
-    Mask *m;
-    int n, num_moves, num_spaces;
-    int r, c;
-
-    assert(analyis_initialized);
-
-    /* Build board, canceling out singletons */
-    memcpy(&brd, brd_in, sizeof(brd));
-    remove_singleton_pairs(&brd);
-
-    /* Determine number of spaces */
-    num_spaces = 0;
-    for (r = 0; r < 10; ++r)
-    {
-        for (c = 0; c < 10; ++c)
-        {
-            labels[r][c] = brd[r][c] ? -1 : num_spaces++;
-        }
-    }
-
-    /* Determine available moves */
-    num_moves = board_list_moves(&brd, moves);
-
-    if (num_moves == 0)
-    {
-        /* Only even number of singletons left -- any move is winning! */
-        num_moves = board_list_moves(brd_in, moves);
-        for (n = 0; n < num_moves; ++n) values[n] = +1;
-        return num_moves;
-    }
-
-    /* Check wether search is feasible */
-    if (num_spaces > MINIMAX_MAX_SIZE)
-    {
-        return -1;
-    }
+    Mask mm[MAX_MOVES+1], *m;
+    bool won[twos + 1][2][1<<spaces];
+    int r, c, n;
+    int one, two;
 
     /* Build move masks */
     for (n = 0; n < num_moves; ++n)
@@ -247,8 +209,15 @@ int analysis_value_moves_misere(Board *brd_in, Rect *moves, int *values)
                 if (r >= moves[n].p.r && r < moves[n].q.r &&
                     c >= moves[n].p.c && c < moves[n].q.c )
                 {
-                    assert(labels[r][c] != -1);
-                    mm[n] |= (1<<labels[r][c]);
+                    if ((*labels)[r][c] == -1)
+                    {
+                        /* Move in one/two/three that was removed */
+                        mm[n] = (Mask)-1;
+                    }
+                    else
+                    {
+                        mm[n] |= (1<<(*labels)[r][c]);
+                    }
                 }
             }
         }
@@ -256,17 +225,32 @@ int analysis_value_moves_misere(Board *brd_in, Rect *moves, int *values)
     mm[num_moves] = 0;
 
     /* Determine state of all subpositions */
-    won[0] = true;
-    for (n = 1; n < (1<<num_spaces); ++n)
+    for (two = 0; two <= twos; ++two)
     {
-        won[n] = false;
-        for (m = mm; *m != 0; ++m)
+        for (one = 0; one < 2; ++one)
         {
-            if ((n&*m) != *m) continue;
-            if (!won[n^*m])
+            for (n = 0; n < (1<<spaces); ++n)
             {
-                won[n] = true;
-                break;
+                if (two == 0 && one == 0 && n == 0) goto won;
+
+                /* See if we can move to a losing position (then we win) */
+                for (m = mm; *m != 0; ++m)
+                {
+                    if ((n&*m) != *m) continue;
+                    if (!won[two][one][n^*m]) goto won;
+                }
+                if (one > 0 && !won[two][0][n]) goto won;
+                if (two > 0 && !won[two-1][one][n]) goto won;
+                if (two > 0 && !won[two-1][one^1][n]) goto won;
+
+                /* No winning moves found */
+                won[two][one][n] = false;
+                continue;
+
+            won:
+                /* Winning move found */
+                won[two][one][n] = true;
+                continue;
             }
         }
     }
@@ -274,8 +258,62 @@ int analysis_value_moves_misere(Board *brd_in, Rect *moves, int *values)
     /* Assign move values */
     for (n = 0; n < num_moves; ++n)
     {
-        values[n] = won[((1<<num_spaces)-1)^mm[n]] ? -2 : +2;
+        if (mm[n] != (Mask)-1)
+        {
+            values[n] = won[twos][ones][((1<<spaces)-1)^mm[n]] ? -2 : +2;
+        }
+        else
+        {
+            Board tmp;
+            memcpy(&tmp, brd, sizeof(tmp));
+            board_fill(&tmp, &moves[n], -1);
+            erase_trivial_groups(&tmp, &one, &two);
+            values[n] = won[two][one][(1<<spaces)-1] ? -2 : +2;
+        }
     }
+}
+
+int analysis_value_moves_misere(Board *brd_in, Rect *moves, int *values)
+{
+    Board brd, labels;
+    int num_moves, num_spaces;
+    int ones, twos;
+    int r, c;
+
+    assert(analyis_initialized);
+
+    /* Build board, for optimization */
+    memcpy(&brd, brd_in, sizeof(brd));
+
+    /* Determine available moves */
+    num_moves = board_list_moves(&brd, moves);
+
+    /* Remove ones/two/threes */
+    erase_trivial_groups(&brd, &ones, &twos);
+
+    /* Determine number of spaces */
+    num_spaces = 0;
+    for (r = 0; r < 10; ++r)
+    {
+        for (c = 0; c < 10; ++c)
+        {
+            labels[r][c] = brd[r][c] ? -1 : num_spaces++;
+        }
+    }
+
+    /* Check whether search is feasible, by calculating the number of
+       iterations performed by the real implementation (currently not including
+       the number of moves).
+
+       Note: we calculcate a > (c>>b) instead of (a<<b) > c, to avoid
+             integer overflow when c is too large (this occurs very quickly).
+    */
+    if ( num_spaces > 31 /* shift by more than the register width is undefined */
+         || 2*(twos + 1) > (MINIMAX_MAX_ITERATIONS >> num_spaces) ) return -1;
+
+    value_moves_misere( brd_in, &labels,
+                        num_moves, moves, values,
+                        num_spaces, ones, twos );
 
     return num_moves;
 }

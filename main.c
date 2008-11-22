@@ -61,7 +61,6 @@ static void shuffle_moves_and_values(Rect *moves, int *values, int num_moves)
     }
 }
 
-
 /* Determine a tiebreaker value for the given move. (Higher is better)
    Current tie-breaker: size of largest group left after making the move
    (motivation: this makes it hard for the opponent to compute the exact result
@@ -138,7 +137,7 @@ void select_move(Board *brd, Rect *move, bool *use_joker)
         cnt[0], cnt[1], cnt[2], cnt[3], cnt[4], best_val, best_tb);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     Board board;
     const char *line;
@@ -151,24 +150,41 @@ int main()
     analysis_initialize();
     seed_rng((unsigned)-1);
 
-    for (r = 0; r < 10; ++r)
+    if (argc < 1 || argc > 2)
     {
-        for (c = 0; c < 10; ++c)
-        {
-            board[r][c] = 0;
-        }
+        fprintf(stderr, "Usage: player [<board>]\n");
+        exit(1);
     }
 
-    for (n = 0; n < 10; ++n)
+    if (argc == 2)
     {
-        Point p;
-
-        line = next_line();
-        if (!point_decode(&p, line))
+        if (!board_decode(&board, argv[1]))
         {
-            fatal("Invalid point received: %s", line);
+            fprintf(stderr, "Invalid board description: %s", argv[1]);
+            exit(1);
         }
-        board[p.r][p.c] = -1;
+    }
+    else
+    {
+        /* Initialize board from pillars */
+        for (r = 0; r < 10; ++r)
+        {
+            for (c = 0; c < 10; ++c)
+            {
+                board[r][c] = 0;
+            }
+        }
+        for (n = 0; n < 10; ++n)
+        {
+            Point p;
+
+            line = next_line();
+            if (!point_decode(&p, line))
+            {
+                fatal("Invalid point received: %s", line);
+            }
+            board[p.r][p.c] = -1;
+        }
     }
 
     info("Initialization complete.");

@@ -26,6 +26,11 @@ static bool is_base32_string(const char *str)
     return true;
 }
 
+bool board_decode(Board *brd, const char *str)
+{
+    return board_decode_full(brd, str) || board_decode_short(brd, str);
+}
+
 bool board_decode_full(Board *brd, const char *str)
 {
     int r, c, i;
@@ -136,7 +141,7 @@ void board_flatten(Board *brd)
     }
 }
 
-void board_clear(Board *brd)
+void board_clear_groups(Board *brd)
 {
     int r, c;
 
@@ -195,7 +200,8 @@ int board_empty_area(Board *brd)
 
 static void permute10(int *arr, int number)
 {
-    static int fac[10] = { 1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880 };
+    static const int fac[11] = {
+        1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800 };
     int pos, i, k, tmp;
 
     for (pos = 0; pos < 9; ++pos)

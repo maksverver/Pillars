@@ -7,17 +7,16 @@
 const char *board_desc = "7VFVVVVVVVVVVVVVVVVV";
 int nval = 3;
 */
-/*
 const char *board_desc = "0V0V0V0VVVVVVVVVVVVV";
 int nval = 9;
-*/
-
 /*
 const char *board_desc = "0V0V0V0V0VVVVVVVVVVV";
 int nval = 8;
 */
+/*
 const char *board_desc = "OV0180V3VVVVVVVVVVVV";
 int nval = 24;
+*/
 
 void debug_cache_info();
 

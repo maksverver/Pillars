@@ -17,12 +17,13 @@ typedef struct Point { int r, c; } Point;
    Required: p.x < q.x && p.y < q.y */
 typedef struct Rect { Point p, q; } Rect;
 
+bool board_decode(Board *board, const char *str);
 bool board_decode_full(Board *board, const char *str);
 bool board_decode_short(Board *board, const char *str);
 void board_encode_full(Board *board, char buf[201]);
 void board_encode_short(Board *board, char buf[26]);
 void board_flatten(Board *board);
-void board_clear(Board *board);
+void board_clear_groups(Board *board);
 bool board_is_valid_move(Board *board, Rect *rect);
 void board_fill(Board *board, Rect *rect, int val);
 int board_empty_area(Board *board);

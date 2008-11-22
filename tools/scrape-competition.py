@@ -35,7 +35,7 @@ def extract_game(page):
     #   resultDesc
     params = {}
     for key,value in re.findall('<param name=\\\\"(.*?)\\\\" value=\\\\"(.*?)\\\\', page):
-        params[key] = value
+        params[key] = value.decode('iso-8859-1')
 
     doc = xml.dom.getDOMImplementation().createDocument(None, "game", None)
     gameElem = doc.firstChild
@@ -105,6 +105,7 @@ base_url = 'http://www.codecup.nl/'
 
 if len(sys.argv) <> 2:
     print 'usage: %s <comp>' % sys.argv[0]
+    sys.exit(1)
 else:
     comp = sys.argv[1]
 
