@@ -11,7 +11,7 @@
 /* max. number of iterations to perform minimax analsyis.
     (currently does not include number of moves, which matter too!) */
 #ifndef MINIMAX_MAX_ITERATIONS
-#define MINIMAX_MAX_ITERATIONS 1200000
+#define MINIMAX_MAX_ITERATIONS (1000*1000*200)
 #endif
 
 typedef struct GroupInfo

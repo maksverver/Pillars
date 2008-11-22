@@ -279,6 +279,7 @@ int analysis_value_moves_misere(Board *brd_in, Rect *moves, int *values)
     int num_moves, num_spaces;
     int ones, twos;
     int r, c;
+    long long est_iter;
 
     assert(analyis_initialized);
 
@@ -301,15 +302,19 @@ int analysis_value_moves_misere(Board *brd_in, Rect *moves, int *values)
         }
     }
 
-    /* Check whether search is feasible, by calculating the number of
-       iterations performed by the real implementation (currently not including
-       the number of moves).
+    /* Estimate required number of iterations */
+    if (num_spaces > 40)
+    {
+        est_iter = 999999999999999999LL;
+    }
+    else
+    {
+        est_iter = (2LL*(twos + 1)*(num_moves + 3)) << num_spaces;
+    }
 
-       Note: we calculcate a > (c>>b) instead of (a<<b) > c, to avoid
-             integer overflow when c is too large (this occurs very quickly).
-    */
-    if ( num_spaces > 31 /* shift by more than the register width is undefined */
-         || 2*(twos + 1) > (MINIMAX_MAX_ITERATIONS >> num_spaces) ) return -1;
+    fprintf(stderr, "Est. iterations: %lld", est_iter);
+
+    if (est_iter > MINIMAX_MAX_ITERATIONS) return -1;
 
     value_moves_misere( brd_in, &labels,
                         num_moves, moves, values,
