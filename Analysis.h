@@ -9,11 +9,9 @@
 #endif
 
 /* Estimated number of minimax iterations per second.
-
-   On the CodeCup system, a million iterations take around 2.5 milliseconds,
-   or 400 million iterations per second.
+   (Based on games played on the official server; may need further adjustment)
 */
-#define MINIMAX_ITERATIONS_PER_SECOND (400*1000*1000)
+#define MINIMAX_ITERATIONS_PER_SECOND (480*1000*1000)
 
 typedef struct GroupInfo
 {

@@ -2,7 +2,7 @@
 #include <sys/time.h>
 #include <stdlib.h>
 
-const double time_limit = 4.75; /* seconds */
+const double time_limit = 4.90; /* seconds */
 
 static struct timeval tv_start;
 static double time_secs_waited = 0;
