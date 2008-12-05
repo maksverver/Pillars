@@ -2,8 +2,8 @@ CFLAGS=-g -ansi -Wall -Wextra -O2 -m32 -I/usr/include/libxml2 -I.
 LDFLAGS=-g -m32
 LDLIBS=-lm -lxml2
 
-SRC=Board.c Analysis.c Group.c Normalization.c
-OBJ=Board.o Analysis.o Group.o Normalization.o
+SRC=Board.c Analysis.c Group.c Normalization.c Timing.c
+OBJ=Board.o Analysis.o Group.o Normalization.o Timing.o
 
 PLAYER_SRCS=$(SRC) Debug.c main.c
 

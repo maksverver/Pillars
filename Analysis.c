@@ -1,4 +1,5 @@
 #include "Analysis.h"
+#include "Timing.h"
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -279,7 +280,6 @@ int analysis_value_moves_misere(Board *brd_in, Rect *moves, int *values)
     int num_moves, num_spaces;
     int ones, twos;
     int r, c;
-    long long est_iter;
 
     assert(analyis_initialized);
 
@@ -303,18 +303,14 @@ int analysis_value_moves_misere(Board *brd_in, Rect *moves, int *values)
     }
 
     /* Estimate required number of iterations */
-    if (num_spaces > 40)
-    {
-        est_iter = 999999999999999999LL;
-    }
-    else
-    {
-        est_iter = (2LL*(twos + 1)*(num_moves + 3)) << num_spaces;
-    }
+    if (num_spaces > 40) return -1;
 
-    fprintf(stderr, "Est. iterations: %lld\n", est_iter);
+    long long est_iter = (2LL*(twos + 1)*(num_moves + 3)) << num_spaces;
+    double est_secs = (double)est_iter/MINIMAX_ITERATIONS_PER_SECOND;
+    fprintf(stderr, "Misere iter: %lld (%.3fs)\n", est_iter, est_secs);
 
-    if (est_iter > MINIMAX_MAX_ITERATIONS) return -1;
+    /* Do minimax analysis if it use at most half of the remaining time. */
+    if (est_secs > 0.5*time_left()) return -1;
 
     value_moves_misere( brd_in, &labels,
                         num_moves, moves, values,

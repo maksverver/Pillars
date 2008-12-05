@@ -10,6 +10,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+static double secs_waited = 0;   /* time spent waiting for input */
+
 static void seed_rng(unsigned seed)
 {
     if (seed == (unsigned)-1)
@@ -24,19 +26,26 @@ static const char *next_line()
 {
     static char buf[1024];
     size_t len;
+    char *res;
 
-    if (!fgets(buf, sizeof(buf), stdin)) return NULL;
-
-    len = strlen(buf);
-    if (len > 0 && buf[len - 1] == '\n')
+    time_pause();
+    res = fgets(buf, sizeof(buf), stdin);
+    secs_waited += time_resume();
+    if (res != NULL)
     {
-        buf[len - 1] = '\0';
-        --len;
+        /* Strip trailing newline character */
+        len = strlen(res);
+        if (len > 0 && res[len - 1] == '\n')
+        {
+            res[len - 1] = '\0';
+            --len;
+        }
+
+        /* Check for Quit command */
+        if (strcmp(buf, "Quit") == 0) res = NULL;
     }
 
-    if (strcmp(buf, "Quit") == 0) return NULL;
-
-    return buf;
+    return res;
 }
 
 static void shuffle_moves_and_values(Rect *moves, int *values, int num_moves)
@@ -153,10 +162,9 @@ int main(int argc, char *argv[])
     const char *line;
     int r, c, n;
     int turn;
-    double total_time;
     bool joker, use_joker;
 
-    time_reset();
+    time_initialize();
     analysis_initialize();
     seed_rng((unsigned)-1);
 
@@ -197,8 +205,8 @@ int main(int argc, char *argv[])
         }
     }
 
-    info("Initialization complete.");
-    total_time = time_now();
+    info("Initialization complete (waited %.3fs)", secs_waited);
+    secs_waited = 0;
 
     turn = 0;
     joker = true;
@@ -206,13 +214,11 @@ int main(int argc, char *argv[])
     {
         Rect move;
         char buf[64];
-        double t0, t1;
 
-        t0 = time_now();
         if ((line = next_line()) == NULL) break;
-        t1 = time_now();
-        info("Received %s (waited %.3fs)", line, t1 - t0);
-        t0 = t1;
+        double t0 = time_used();
+        info("Received %s (waited %.3fs)", line, secs_waited);
+        secs_waited = 0;
 
         if (strcmp(line, "Start") == 0) goto start;
         if (!rect_decode(&move, line) || !board_is_valid_move(&board, &move))
@@ -238,13 +244,12 @@ int main(int argc, char *argv[])
             rect_encode(&move, buf);
         }
         board_fill(&board, &move, ++turn);
-        t1 = time_now();
-        total_time += t1 - t0;
-        info("Sending %s (calculated for %.3fs; %.3fs total)", buf, t1 - t0, total_time);
+        info( "Sending %s (calculated for %.3fs; %.3fs total)",
+              buf, time_used() - t0, time_used());
         fprintf(stdout, "%s\n", buf);
         fflush(stdout);
     }
-    info("Exiting (used %.3fs)", total_time);
+    info("Exiting (used %.3fs)", time_used());
 
     return 0;
 }

@@ -8,11 +8,12 @@
 #define ANALYSIS_MAX_SIZE 20    /* max. group size for normal-play analysis */
 #endif
 
-/* max. number of iterations to perform minimax analsyis.
-    (currently does not include number of moves, which matter too!) */
-#ifndef MINIMAX_MAX_ITERATIONS
-#define MINIMAX_MAX_ITERATIONS (1000*1000*200)
-#endif
+/* Estimated number of minimax iterations per second.
+
+   On the CodeCup system, a million iterations take around 2.5 milliseconds,
+   or 400 million iterations per second.
+*/
+#define MINIMAX_ITERATIONS_PER_SECOND (400*1000*1000)
 
 typedef struct GroupInfo
 {
