@@ -5,7 +5,7 @@
 #include "Group.h"
 
 #ifndef ANALYSIS_MAX_SIZE
-#define ANALYSIS_MAX_SIZE 20    /* max. group size for normal-play analysis */
+#define ANALYSIS_MAX_SIZE 19    /* max. group size for normal-play analysis */
 #endif
 
 /* Estimated number of minimax iterations per second.

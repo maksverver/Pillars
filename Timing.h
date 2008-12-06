@@ -1,9 +1,7 @@
 #ifndef TIMING_H_INCLUDED
 #define TIMING_H_INCLUDED
 
-extern const double time_limit;     /* time limit in seconds */
-
-void time_initialize();     /* initialize the timer */
+void time_initialize(double time_limit);     /* initialize the timer */
 
 void time_pause();          /* pause the timer */
 double time_resume();       /* resume the timer; reports time waited */

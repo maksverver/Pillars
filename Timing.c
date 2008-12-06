@@ -2,7 +2,7 @@
 #include <sys/time.h>
 #include <stdlib.h>
 
-const double time_limit = 4.90; /* seconds */
+static double time_limit;
 
 static struct timeval tv_start;
 static double time_secs_waited = 0;
@@ -21,8 +21,9 @@ static double now()
     return (tv.tv_sec - tv_start.tv_sec) + 1e-6*(tv.tv_usec - tv_start.tv_usec);
 }
 
-void time_initialize()
+void time_initialize(double tl)
 {
+    time_limit = tl;
     tv_start = tv_now();
 }
 

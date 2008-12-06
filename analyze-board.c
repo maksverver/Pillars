@@ -1,5 +1,6 @@
 #include "Board.h"
 #include "Analysis.h"
+#include "Timing.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,6 +16,7 @@ int main(int argc, char *argv[])
     char buf[5];
 
     analysis_initialize();
+    time_initialize(60.0);
 
     if (argc != 2)
     {

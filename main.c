@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
     int turn;
     bool joker, use_joker;
 
-    time_initialize();
+    time_initialize(4.9);  /* time limit: 4.9 sec */
     analysis_initialize();
     seed_rng((unsigned)-1);
 

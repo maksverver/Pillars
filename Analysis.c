@@ -195,9 +195,11 @@ static void value_moves_misere(
     const int spaces, const int ones, const int twos )
 {
     Mask mm[MAX_MOVES+1], *m;
-    bool won[twos + 1][2][1<<spaces];
+    bool (*won)[2][1<<spaces];
     int r, c, n;
     int one, two;
+
+    won = malloc(sizeof(bool)*(twos + 1)*2*(1<<spaces));
 
     /* Build move masks */
     for (n = 0; n < num_moves; ++n)
@@ -272,6 +274,8 @@ static void value_moves_misere(
             values[n] = won[two][one][(1<<spaces)-1] ? -3 : +3;
         }
     }
+
+    free(won);
 }
 
 int analysis_value_moves_misere(Board *brd_in, Rect *moves, int *values)
@@ -309,8 +313,8 @@ int analysis_value_moves_misere(Board *brd_in, Rect *moves, int *values)
     double est_secs = (double)est_iter/MINIMAX_ITERATIONS_PER_SECOND;
     fprintf(stderr, "Misere iter: %lld (%.3fs)\n", est_iter, est_secs);
 
-    /* Do minimax analysis if it use at most half of the remaining time. */
-    if (est_secs > 0.5*time_left()) return -1;
+    /* Do minimax analysis if it use at most 2/3rd of the remaining time. */
+    if (est_secs > 0.667*time_left()) return -1;
 
     value_moves_misere( brd_in, &labels,
                         num_moves, moves, values,

@@ -3,13 +3,23 @@ import os, sys
 from xml.dom import minidom
 from xml import xpath
 
+def cmp_filenames(a, b):
+    x = a.split('-')
+    y = b.split('-')
+    for i in range(min(len(x), len(y))):
+        if len(x[i]) != len(y[i]): return len(x[i]) - len(y[i])
+        if x[i] < y[i]: return -1
+        if x[i] > y[i]: return +1
+    if len(x) != len(y): return len(x) - len(y)
+    return 0;
+
 def show(id, contestants, swiss_rounds, finalists):
     round = 0
 
     player_score = {}
     player_won = {}
     player_lost = {}
-    for filename in sorted(os.listdir('.')):
+    for filename in sorted(os.listdir('.'), cmp_filenames):
         if not filename.startswith('%d-' % id): continue
         round += 1
         if round <= swiss_rounds*contestants: continue
