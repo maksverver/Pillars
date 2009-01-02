@@ -310,9 +310,11 @@ int analysis_value_moves_misere(Board *brd_in, Rect *moves, int *values)
     /* Estimate required number of iterations */
     if (num_spaces > 40) return -1;
 
-    long long est_iter = (2LL*(twos + 1)*(num_moves + 3)) << num_spaces;
+    long long est_space = 2LL*(twos + 1) << num_spaces;
+    long long est_iter  = est_space * (num_moves + 3);
     double est_secs = (double)est_iter/MINIMAX_ITERATIONS_PER_SECOND;
-    fprintf(stderr, "Misere iter: %lld (%.3fs)\n", est_iter, est_secs);
+    fprintf(stderr, "Misere iter: %lld (%.3fs) space: %.3f MB\n",
+                    est_iter, est_secs, (double)est_space/(1<<20) );
 
     /* Do minimax analysis if it use at most 2/3rd of the remaining time. */
     if (est_secs > 0.667*time_left()) return -1;
