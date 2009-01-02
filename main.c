@@ -135,7 +135,11 @@ search_values:
         goto search_values;
     }
 
-    *use_joker = !fallback && (best_val >= +2);
+    /* Use joker whenever we are likely to win (even assuming normal play) */
+    /* *use_joker = !fallback && (best_val >= +2); */
+
+    /* Use joker in first turn to maximize total score */
+    *use_joker = true;
 
     shuffle_moves_and_values(moves, values, num_moves);
     best_tb = -1;

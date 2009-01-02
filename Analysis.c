@@ -200,6 +200,7 @@ static void value_moves_misere(
     int one, two;
 
     won = malloc(sizeof(bool)*(twos + 1)*2*(1<<spaces));
+    assert(won != NULL);
 
     /* Build move masks */
     for (n = 0; n < num_moves; ++n)
