@@ -11,18 +11,18 @@ def cmp_filenames(a, b):
         if x[i] < y[i]: return -1
         if x[i] > y[i]: return +1
     if len(x) != len(y): return len(x) - len(y)
-    return 0;
+    return 0
 
 def show(id, contestants, swiss_rounds, finalists):
-    round = 0
+    game = 0
 
     player_score = {}
     player_won = {}
     player_lost = {}
     for filename in sorted(os.listdir('.'), cmp_filenames):
         if not filename.startswith('%d-' % id): continue
-        round += 1
-        if round <= swiss_rounds*contestants: continue
+        game += 1
+        if game <= swiss_rounds*contestants: continue
 
         doc = minidom.parse(filename)
         name1 = xpath.Evaluate('/game/player1/name/text()', doc)[0].data
